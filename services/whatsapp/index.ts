@@ -55,7 +55,7 @@ export const whatsappTemplates = {
   welcome: (name: string) =>
     `¡Hola ${name}! 👋 Soy VendeMás, tu agencia de contenido y anuncios por WhatsApp. ¿Querés que te arme algo para vender más?`,
   deliveryLink: (businessName: string, url: string) =>
-    `✅ Listo ${businessName}! Te dejé el contenido acá: ${url}\n\nRespondé:\n1 Aprobar · 2 Pedir cambios · 3 Hacerlo más vendedor · 4 Crear anuncio · 5 Más versiones`,
+    `✅ Listo ${businessName}! Te dejé el contenido acá: ${url}\n\nRespondé:\n1 Aprobar · 2 Pedir cambios · 3 Hacerlo más vendedor · 4 Más versiones`,
   contentApproval: (url: string) =>
     `Tu contenido está listo 🙌 Miralo acá: ${url}\nRespondé 1 para aprobar o 2 para pedir cambios.`,
   campaignApproval: (objective: string) =>

@@ -15,6 +15,8 @@ export type SimPhase =
   | "collecting_city"
   | "collecting_offer"
   | "ready"
+  | "qc_business"
+  | "qc_category"
   | "qc_product"
   | "qc_offer"
   | "qc_budget"
@@ -28,6 +30,7 @@ export interface SimSession {
   userId?: string;
   businessProfileId?: string;
   businessName?: string;
+  ownBusiness?: boolean;
   draft: Record<string, string>;
   lastOrderId?: string;
   lastDeliveryUrl?: string;
@@ -137,6 +140,7 @@ export async function handleTurn(input: SimSession, text: string): Promise<TurnR
       session.userId = user.id;
       session.businessProfileId = business.id;
       session.businessName = business.businessName;
+      session.ownBusiness = true;
       session.phase = "ready";
       say(`¡Listo! Tu negocio "${business.businessName}" ya está cargado en VendeMás 🎉`);
       say(MENU);
@@ -144,12 +148,29 @@ export async function handleTurn(input: SimSession, text: string): Promise<TurnR
     }
     case "ready": {
       if (quickCampaignService.detectQuickCampaignIntent(t)) {
-        session.phase = "qc_product";
-        say("¡Vamos con una Campaña Rápida! ⚡ ¿Qué producto o servicio querés vender?");
+        if (session.ownBusiness && session.businessProfileId) {
+          session.phase = "qc_product";
+          say(`¡Vamos con una Campaña Rápida para ${session.businessName}! ⚡ ¿Qué producto o servicio querés vender?`);
+        } else {
+          session.phase = "qc_business";
+          say("¡Vamos con una Campaña Rápida! ⚡ Primero, ¿cómo se llama tu negocio?");
+        }
       } else {
         say("Te leo 🙂");
         say(MENU);
       }
+      break;
+    }
+    case "qc_business": {
+      session.draft.businessName = t;
+      session.phase = "qc_category";
+      say(`¡Buenísimo, ${t}! ¿De qué rubro es? (ej: ropa, comida, mascotas…)`);
+      break;
+    }
+    case "qc_category": {
+      session.draft.category = t;
+      session.phase = "qc_product";
+      say("¿Qué producto o servicio querés promocionar?");
       break;
     }
     case "qc_product": {
@@ -166,12 +187,47 @@ export async function handleTurn(input: SimSession, text: string): Promise<TurnR
     }
     case "qc_budget": {
       session.draft.budget = t;
-      if (!session.businessProfileId) {
-        session.phase = "ready";
-        say("Necesito que primero registremos tu negocio. Escribí \"hola\".");
-        break;
+
+      // Resolver el negocio: si la persona ya tiene el suyo registrado, usarlo;
+      // si no, crear/usar uno con el nombre y rubro que escribió. Así el contenido
+      // y la respuesta se adaptan a SU negocio (no al de ejemplo).
+      let businessProfileId =
+        session.ownBusiness && session.businessProfileId ? session.businessProfileId : undefined;
+      if (!businessProfileId) {
+        const name = session.draft.businessName?.trim() || "Mi negocio";
+        const user = await prisma.user.upsert({
+          where: { phone: session.phone },
+          update: {},
+          create: { name, phone: session.phone, role: "owner" },
+        });
+        const existing = await prisma.businessProfile.findFirst({
+          where: { userId: user.id, businessName: name },
+        });
+        const business =
+          existing ??
+          (await prisma.businessProfile.create({
+            data: {
+              userId: user.id,
+              businessName: name,
+              category: session.draft.category?.trim() || "General",
+              country: "Uruguay",
+              mainOffer: session.draft.qcOffer || session.draft.product || null,
+              toneOfVoice: "Cercano, simple y vendedor",
+              consentToAnalyzeConversations: true,
+              digestWhatsappOptIn: true,
+              brandKit: {
+                create: { toneOfVoice: "Cercano, simple y vendedor", visualStyle: "Limpio y comercial" },
+              },
+            },
+          }));
+        session.userId = user.id;
+        session.businessProfileId = business.id;
+        session.businessName = business.businessName;
+        session.ownBusiness = true;
+        businessProfileId = business.id;
       }
-      const order = await quickCampaignService.generateQuickCampaignOrder(session.businessProfileId, {
+
+      const order = await quickCampaignService.generateQuickCampaignOrder(businessProfileId, {
         productOrService: session.draft.product,
         offer: session.draft.qcOffer,
         budget: session.draft.budget,
@@ -206,11 +262,11 @@ export async function handleTurn(input: SimSession, text: string): Promise<TurnR
         await createRevision(session, "Hacerlo más vendedor");
         say("Lo hago más vendedor y te aviso 🔥");
         session.phase = "waiting_approval";
-      } else if (choice === "5" || choice.includes("versi")) {
+      } else if (choice === "4" || choice === "5" || choice.includes("versi")) {
         await createRevision(session, "Crear más versiones");
         say("Te genero más versiones 👍");
       } else {
-        say("Respondé: 1 Aprobar · 2 Pedir cambios · 3 Más vendedor · 5 Más versiones");
+        say("Respondé: 1 Aprobar · 2 Pedir cambios · 3 Más vendedor · 4 Más versiones");
       }
       break;
     }
