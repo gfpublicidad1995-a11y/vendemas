@@ -10,6 +10,7 @@ import {
 import { asRecord } from "@/lib/json";
 import { CopyButton } from "@/components/delivery/CopyButton";
 import { ShareDeliveryBar, WhatsAppCopyButton } from "@/components/delivery/ShareButtons";
+import { AdCreativePreview } from "@/components/delivery/AdCreativePreview";
 import {
   ApproveOrderButton,
   RequestChangesForm,
@@ -35,7 +36,7 @@ export default async function DeliveryPage({
     include: {
       contentOrder: {
         include: {
-          businessProfile: { include: { brandKit: true } },
+          businessProfile: { include: { brandKit: true, assets: true } },
           contentPieces: { orderBy: { createdAt: "asc" } },
           campaignDrafts: true,
           visualCreatives: true,
@@ -49,6 +50,10 @@ export default async function DeliveryPage({
   const order = link.contentOrder;
   const business = order.businessProfile;
   const approval = order.contentApprovals[0];
+  const assetUrl = (t: string) => business.assets.find((a) => a.type === t)?.url ?? null;
+  const productPhotoUrl = assetUrl("product_photo");
+  const logoUrl = assetUrl("logo") ?? business.brandKit?.logoUrl ?? null;
+  const founderPhotoUrl = assetUrl("founder_photo");
   const pieceIds = order.contentPieces.map((p) => p.id);
   const score = pieceIds.length
     ? await prisma.contentScore.findFirst({ where: { contentPieceId: { in: pieceIds } } })
@@ -160,37 +165,60 @@ export default async function DeliveryPage({
                   <div key={bucket.title}>
                     <h3 className="mb-2 text-sm font-medium text-stone-700">{bucket.title}</h3>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {items.map((v) => (
-                        <Card key={v.id} className="overflow-hidden">
-                          <div className="aspect-square bg-stone-100">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={v.fileUrl ?? ""} alt={v.aspectRatio} className="h-full w-full object-cover" />
-                          </div>
-                          <div className="p-2 text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="text-stone-500">{v.width}×{v.height}</span>
-                              <Badge tone={toneForStatus(v.validationStatus)}>
-                                {validationStatusLabel(v.validationStatus)}
-                              </Badge>
-                            </div>
-                            <div className="mt-1 text-stone-400">{v.placement}</div>
-                            {asRecord(v.metadata).angleLabel ? (
-                              <div className="mt-0.5 font-medium text-purple-600">
-                                {String(asRecord(v.metadata).angleLabel)}
+                      {items.map((v) => {
+                        const meta = asRecord(v.metadata);
+                        return (
+                          <Card key={v.id} className="overflow-hidden">
+                            {meta.composed ? (
+                              <AdCreativePreview
+                                aspectRatio={v.aspectRatio}
+                                headline={String(meta.headline ?? "")}
+                                offer={meta.offer ? String(meta.offer) : null}
+                                cta={meta.cta ? String(meta.cta) : null}
+                                brandName={String(meta.brandName ?? business.businessName)}
+                                primaryColor={
+                                  meta.primaryColor
+                                    ? String(meta.primaryColor)
+                                    : business.brandKit?.primaryColor ?? null
+                                }
+                                productPhotoUrl={productPhotoUrl}
+                                logoUrl={logoUrl}
+                                founderPhotoUrl={founderPhotoUrl}
+                              />
+                            ) : (
+                              <div className="aspect-square bg-stone-100">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={v.fileUrl ?? ""} alt={v.aspectRatio} className="h-full w-full object-cover" />
                               </div>
-                            ) : null}
-                            <a
-                              href={v.fileUrl ?? "#"}
-                              target="_blank"
-                              rel="noreferrer"
-                              download
-                              className="mt-2 block rounded-md bg-stone-100 py-1 text-center text-stone-600 hover:bg-stone-200"
-                            >
-                              Descargar
-                            </a>
-                          </div>
-                        </Card>
-                      ))}
+                            )}
+                            <div className="p-2 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="text-stone-500">{v.width}×{v.height}</span>
+                                <Badge tone={toneForStatus(v.validationStatus)}>
+                                  {validationStatusLabel(v.validationStatus)}
+                                </Badge>
+                              </div>
+                              <div className="mt-1 text-stone-400">{v.placement}</div>
+                              {meta.angleLabel ? (
+                                <div className="mt-0.5 font-medium text-purple-600">
+                                  {String(meta.angleLabel)}
+                                </div>
+                              ) : null}
+                              {meta.composed ? null : (
+                                <a
+                                  href={v.fileUrl ?? "#"}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  download
+                                  className="mt-2 block rounded-md bg-stone-100 py-1 text-center text-stone-600 hover:bg-stone-200"
+                                >
+                                  Descargar
+                                </a>
+                              )}
+                            </div>
+                          </Card>
+                        );
+                      })}
                     </div>
                   </div>
                 );

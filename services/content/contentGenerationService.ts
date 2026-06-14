@@ -277,6 +277,13 @@ class ContentGenerationService {
     const basePrompt = await aiService.generateVisualPromptBase(ctx, subject);
     const variants: VariantSpec[] = metaCreativeSpecsService.suggestCreativeVariants(placements ?? []);
 
+    // Assets del brief: si hay foto de producto, los anuncios se componen con
+    // ella + logo + foto del cliente + colores + copy (se arman en la entrega).
+    const productAsset = await prisma.asset.findFirst({
+      where: { businessProfileId: order.businessProfileId, type: "product_photo" },
+    });
+    const composed = !!productAsset;
+
     const jobInput = { kind: "creative_variations", count: variants.length };
     const job = await prisma.visualGenerationJob.create({
       data: {
@@ -343,7 +350,17 @@ class ContentGenerationService {
           fileUrl: result.fileUrl,
           provider: result.provider,
           providerJobId: result.providerJobId,
-          metadata: angle ? { angle: angle.angle, angleLabel: angle.angleLabel } : undefined,
+          assetId: productAsset?.id ?? null,
+          metadata: {
+            ...(angle ? { angle: angle.angle, angleLabel: angle.angleLabel } : {}),
+            composed,
+            headline: angle?.headline ?? ctx.mainOffer ?? ctx.businessName,
+            offer: order.offer ?? ctx.mainOffer ?? null,
+            cta: "Escribinos por WhatsApp",
+            brandName: ctx.businessName,
+            primaryColor: brand?.primaryColor ?? null,
+            secondaryColor: brand?.secondaryColor ?? null,
+          },
         },
       });
 
