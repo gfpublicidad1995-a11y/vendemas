@@ -17,7 +17,20 @@ export interface StorageService {
 
 class MockStorageService implements StorageService {
   async uploadFile(input: UploadInput) {
-    return { key: input.key, url: this.placeholder(input.key) };
+    return { key: input.key, url: this.toUrl(input) };
+  }
+  // En modo demo embebemos la imagen como data URL (hasta ~2.5MB) para poder
+  // mostrarla de verdad sin storage real. Con S3/R2/Supabase devolvería una URL de CDN.
+  private toUrl(input: UploadInput): string {
+    if (input.data && input.contentType?.startsWith("image/")) {
+      const bytes =
+        typeof input.data === "string" ? new TextEncoder().encode(input.data) : input.data;
+      if (bytes.byteLength <= 2_500_000) {
+        const base64 = Buffer.from(bytes).toString("base64");
+        return `data:${input.contentType};base64,${base64}`;
+      }
+    }
+    return this.placeholder(input.key);
   }
   async getFileUrl(key: string) {
     return this.placeholder(key);

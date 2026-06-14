@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +24,14 @@ export default async function BusinessesPage() {
       <PageHeader
         title="Negocios"
         description="Cada negocio tiene su marca, sus conversaciones y su contenido. No mezclamos datos entre negocios."
-      />
+      >
+        <ButtonLink href="/dashboard/businesses/new">+ Nuevo negocio</ButtonLink>
+      </PageHeader>
       {businesses.length === 0 ? (
-        <EmptyState title="Todavía no hay negocios" description="Creá uno desde el simulador de WhatsApp." />
+        <EmptyState
+          title="Todavía no hay negocios"
+          description="Tocá “+ Nuevo negocio” para cargar el brief de marca (datos + fotos), o creá uno desde el simulador de WhatsApp."
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {businesses.map((b) => (

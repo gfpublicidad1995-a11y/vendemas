@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-better-sqlite3",
     "better-sqlite3",
   ],
+  experimental: {
+    // El brief de marca sube fotos (producto, logo, dueño) por Server Action.
+    // El default es 1MB; lo subimos para permitir imágenes.
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
 };
 
 export default nextConfig;

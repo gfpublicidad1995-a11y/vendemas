@@ -15,6 +15,7 @@ import { voiceBriefService } from "@/services/voice/voiceBriefService";
 import { revisionService } from "@/services/revisions/revisionService";
 import { marketStrategyService } from "@/services/strategy/marketStrategyService";
 import { handleTurn, type SimSession } from "@/services/whatsapp/conversationFlow";
+import { storageService } from "@/services/storage";
 
 // --- Simulador ---------------------------------------------------------------
 export async function simulateTurn(session: SimSession, text: string) {
@@ -192,6 +193,78 @@ export async function createContentFromVoice(formData: FormData) {
   );
   const result = await voiceBriefService.createContentOrderFromVoiceBrief(vb.id);
   redirect(`/dashboard/orders/${result.orderId}`);
+}
+
+// --- Alta de negocio / brief de marca ---------------------------------------
+export async function createBusiness(formData: FormData) {
+  const str = (k: string) => {
+    const v = formData.get(k);
+    const s = typeof v === "string" ? v.trim() : "";
+    return s === "" ? null : s;
+  };
+
+  const businessName = str("businessName");
+  if (!businessName) throw new Error("Falta el nombre del negocio.");
+
+  const user = await prisma.user.findFirst();
+  if (!user) throw new Error("No hay usuario en la base. Corré `npm run seed`.");
+
+  const budgetRaw = str("monthlyAdBudget");
+  const tone = str("toneOfVoice") ?? "Cercano, simple y vendedor";
+
+  const business = await prisma.businessProfile.create({
+    data: {
+      userId: user.id,
+      businessName,
+      category: str("category") ?? "General",
+      description: str("description"),
+      city: str("city"),
+      country: str("country") ?? "Uruguay",
+      targetAudience: str("targetAudience"),
+      toneOfVoice: tone,
+      mainOffer: str("mainOffer"),
+      whatsappNumber: str("whatsappNumber"),
+      instagramHandle: str("instagramHandle"),
+      monthlyAdBudget: budgetRaw ? Number(budgetRaw) || null : null,
+    },
+  });
+
+  const logoUrl = await saveAsset(formData.get("logo"), business.id, "logo");
+  await saveAsset(formData.get("productPhoto"), business.id, "product_photo");
+  await saveAsset(formData.get("founderPhoto"), business.id, "founder_photo");
+
+  await prisma.brandKit.create({
+    data: {
+      businessProfileId: business.id,
+      logoUrl,
+      toneOfVoice: tone,
+      visualStyle: str("visualStyle") ?? "Limpio y comercial",
+      primaryColor: str("primaryColor"),
+      secondaryColor: str("secondaryColor"),
+    },
+  });
+
+  revalidatePath("/dashboard/businesses");
+  redirect(`/dashboard/businesses/${business.id}`);
+}
+
+/** Sube un archivo del brief y crea su Asset. Devuelve la URL (o null si no hay archivo). */
+async function saveAsset(
+  entry: FormDataEntryValue | null,
+  businessProfileId: string,
+  type: string
+): Promise<string | null> {
+  if (!entry || typeof entry === "string" || entry.size === 0) return null;
+  const bytes = new Uint8Array(await entry.arrayBuffer());
+  const { url } = await storageService.uploadFile({
+    key: `${businessProfileId}/${type}-${entry.name}`,
+    contentType: entry.type,
+    data: bytes,
+  });
+  await prisma.asset.create({
+    data: { businessProfileId, type, url, filename: entry.name, mimeType: entry.type },
+  });
+  return url;
 }
 
 async function firstOwnerId(businessProfileId: string): Promise<string | null> {
