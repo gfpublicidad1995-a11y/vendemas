@@ -245,6 +245,9 @@ export async function createBusiness(formData: FormData) {
   });
 
   revalidatePath("/dashboard/businesses");
+  if (str("source") === "public") {
+    redirect("/alta/gracias");
+  }
   redirect(`/dashboard/businesses/${business.id}`);
 }
 

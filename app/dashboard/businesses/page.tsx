@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader } from "@/components/ui";
+import { ShareIntakeButton } from "@/components/intake/ShareIntakeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function BusinessesPage() {
         title="Negocios"
         description="Cada negocio tiene su marca, sus conversaciones y su contenido. No mezclamos datos entre negocios."
       >
+        <ShareIntakeButton />
         <ButtonLink href="/dashboard/businesses/new">+ Nuevo negocio</ButtonLink>
       </PageHeader>
       {businesses.length === 0 ? (
