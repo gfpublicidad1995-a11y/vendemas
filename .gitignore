@@ -44,6 +44,8 @@ next-env.d.ts
 /lib/generated/prisma
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 
 # scripts internos de provisión/diagnóstico (locales, no deployar)
 /prisma/_*.ts
