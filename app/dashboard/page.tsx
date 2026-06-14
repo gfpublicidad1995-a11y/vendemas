@@ -77,7 +77,7 @@ export default async function DashboardHome() {
         description="Vos atendé tu negocio. Acá vemos el contenido, los anuncios y las ideas para vender más."
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="vm-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard label="Negocios" value={businesses} href="/dashboard/businesses" tone="emerald" />
         <StatCard label="Pedidos pendientes" value={pendingOrders} href="/dashboard/orders" tone="amber" />
         <StatCard label="Piezas generadas" value={contentPieces} href="/dashboard/content" tone="green" />
@@ -92,7 +92,7 @@ export default async function DashboardHome() {
         <StatCard label="Creativos con avisos" value={warningCreatives} href="/dashboard/visuals" tone="amber" />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="vm-stagger mt-8 grid gap-6 lg:grid-cols-2">
         <section>
           <SectionTitle
             action={

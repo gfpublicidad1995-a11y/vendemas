@@ -45,6 +45,9 @@ next-env.d.ts
 *.db
 *.db-journal
 
+# scripts internos de provisión/diagnóstico (locales, no deployar)
+/prisma/_*.ts
+
 # tunnel / tooling
 cloudflared.exe
 .playwright-mcp/

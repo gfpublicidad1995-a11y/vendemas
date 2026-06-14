@@ -17,3 +17,85 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+/* ---------- Animaciones (entrada de tarjetas, burbujas de chat, "escribiendo") ---------- */
+@keyframes vm-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vm-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vm-blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.vm-fade-up {
+  animation: vm-fade-up 0.45s ease-out both;
+}
+
+.vm-bubble-in {
+  animation: vm-bubble-in 0.28s ease-out both;
+}
+
+/* Entrada escalonada: cada hijo aparece un poquito después que el anterior. */
+.vm-stagger > * {
+  animation: vm-fade-up 0.5s ease-out both;
+}
+.vm-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.vm-stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.vm-stagger > *:nth-child(3) { animation-delay: 0.11s; }
+.vm-stagger > *:nth-child(4) { animation-delay: 0.15s; }
+.vm-stagger > *:nth-child(5) { animation-delay: 0.19s; }
+.vm-stagger > *:nth-child(6) { animation-delay: 0.23s; }
+.vm-stagger > *:nth-child(7) { animation-delay: 0.27s; }
+.vm-stagger > *:nth-child(8) { animation-delay: 0.31s; }
+.vm-stagger > *:nth-child(9) { animation-delay: 0.35s; }
+.vm-stagger > *:nth-child(10) { animation-delay: 0.39s; }
+.vm-stagger > *:nth-child(11) { animation-delay: 0.43s; }
+.vm-stagger > *:nth-child(n + 12) { animation-delay: 0.47s; }
+
+/* Puntitos de "escribiendo…" estilo WhatsApp. */
+.vm-typing-dot {
+  display: inline-block;
+  height: 7px;
+  width: 7px;
+  border-radius: 9999px;
+  background: #9ca3af;
+  animation: vm-blink 1.3s infinite both;
+}
+.vm-typing-dot:nth-child(2) { animation-delay: 0.18s; }
+.vm-typing-dot:nth-child(3) { animation-delay: 0.36s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vm-fade-up,
+  .vm-bubble-in,
+  .vm-stagger > *,
+  .vm-typing-dot {
+    animation: none;
+  }
+}

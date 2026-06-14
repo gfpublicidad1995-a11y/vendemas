@@ -42,7 +42,7 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-6 pb-12 pt-8 lg:grid-cols-2 lg:pb-20 lg:pt-12">
-        <div>
+        <div className="vm-fade-up">
           <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
             Tu agencia, dentro de WhatsApp
           </span>
@@ -73,7 +73,7 @@ export default function LandingPage() {
         </div>
 
         {/* Mock de chat */}
-        <div className="mx-auto w-full max-w-sm">
+        <div className="vm-fade-up mx-auto w-full max-w-sm" style={{ animationDelay: "0.12s" }}>
           <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-xl">
             <div className="flex items-center gap-2 bg-emerald-600 px-4 py-3 text-white">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">V</div>

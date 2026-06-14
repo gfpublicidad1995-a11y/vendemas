@@ -14,6 +14,8 @@ function makeSession(phone: string): SimSession {
   return { phone, phase: "start", draft: {} };
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const QUICK_CHIPS = [
   "Hola",
   "Quiero vender más esta semana",
@@ -42,11 +44,18 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
     try {
       const res = await simulateTurn(session, trimmed);
       setSession(res.session);
-      setMessages((m) => [
-        ...m,
-        ...res.replies.map((r) => ({ from: "bot" as const, text: r.text, deliveryUrl: r.deliveryUrl })),
-      ]);
+      // Revelamos las respuestas de a una, con una pausa de "escribiendo…" entre
+      // cada una, para que se sienta como una charla real de WhatsApp.
+      for (let i = 0; i < res.replies.length; i++) {
+        const r = res.replies[i];
+        await sleep(i === 0 ? 650 : 550 + Math.min(r.text.length * 6, 900));
+        setMessages((m) => [
+          ...m,
+          { from: "bot" as const, text: r.text, deliveryUrl: r.deliveryUrl },
+        ]);
+      }
     } catch (e) {
+      await sleep(500);
       setMessages((m) => [
         ...m,
         { from: "bot", text: "⚠️ Ups, algo falló generando el contenido. Probá de nuevo." },
@@ -90,7 +99,7 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm shadow-sm ${
+                className={`vm-bubble-in max-w-[80%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm shadow-sm ${
                   m.from === "user" ? "bg-[#d9fdd3] text-stone-800" : "bg-white text-stone-800"
                 }`}
               >
@@ -110,7 +119,11 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
           ))}
           {loading ? (
             <div className="flex justify-start">
-              <div className="rounded-2xl bg-white px-3 py-2 text-sm text-stone-400 shadow-sm">escribiendo…</div>
+              <div className="vm-bubble-in flex items-center gap-1.5 rounded-2xl bg-white px-3.5 py-3 shadow-sm">
+                <span className="vm-typing-dot" />
+                <span className="vm-typing-dot" />
+                <span className="vm-typing-dot" />
+              </div>
             </div>
           ) : null}
         </div>

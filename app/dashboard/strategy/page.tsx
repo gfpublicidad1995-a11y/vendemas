@@ -36,6 +36,18 @@ function Maleta({ n, title, children }: { n: number; title: string; children: Re
   );
 }
 
+function Highlight({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <Card className="h-full p-4">
+      <div className="text-2xl">{icon}</div>
+      <div className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
+        {label}
+      </div>
+      <div className="mt-0.5 text-sm font-medium leading-snug text-stone-800">{value}</div>
+    </Card>
+  );
+}
+
 function StrategyView({ strategy }: { strategy: NonNullable<Awaited<ReturnType<typeof getBusinesses>>[number]["marketStrategy"]> }) {
   const brand = asRecord(strategy.brandDna);
   const avatar = asRecord(strategy.avatar);
@@ -52,6 +64,18 @@ function StrategyView({ strategy }: { strategy: NonNullable<Awaited<ReturnType<t
 
   return (
     <div className="space-y-6">
+      {/* Resumen visual de un vistazo */}
+      <div className="vm-stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Highlight icon="💎" label="Posicionamiento" value={s(brand.propuestaValor)} />
+        <Highlight icon="🎯" label="Público objetivo" value={`${s(avatar.publico)} · ${s(avatar.zona)}`} />
+        <Highlight icon="🧠" label="Nivel de consciencia" value={awarenessLevelLabel(strategy.dominantAwarenessLevel)} />
+        <Highlight
+          icon="💰"
+          label="Presupuesto sugerido"
+          value={`${s(budget.presupuestoMensual)}/mes · ${s(budget.inversionDiariaSugerida)}/día`}
+        />
+      </div>
+
       {/* Resumen */}
       <Card className="p-5">
         <div className="mb-2 flex flex-wrap items-center gap-2">
