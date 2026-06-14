@@ -172,6 +172,7 @@ export default async function DeliveryPage({
                             {meta.composed ? (
                               <AdCreativePreview
                                 aspectRatio={v.aspectRatio}
+                                angle={meta.angle ? String(meta.angle) : null}
                                 headline={String(meta.headline ?? "")}
                                 offer={meta.offer ? String(meta.offer) : null}
                                 cta={meta.cta ? String(meta.cta) : null}
