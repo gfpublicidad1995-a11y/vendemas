@@ -7,6 +7,7 @@ import {
   SectionTitle,
   StatCard,
 } from "@/components/ui";
+import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
 import {
   orderTypeLabel,
   orderStatusLabel,
@@ -72,6 +73,7 @@ export default async function DashboardHome() {
 
   return (
     <div>
+      <WelcomeCard />
       <PageHeader
         title="Panel de VendeMás"
         description="Vos atendé tu negocio. Acá vemos el contenido, los anuncios y las ideas para vender más."
