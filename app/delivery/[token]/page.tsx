@@ -9,6 +9,7 @@ import {
 } from "@/lib/labels";
 import { asRecord } from "@/lib/json";
 import { CopyButton } from "@/components/delivery/CopyButton";
+import { ShareDeliveryBar, WhatsAppCopyButton } from "@/components/delivery/ShareButtons";
 import {
   ApproveOrderButton,
   RequestChangesForm,
@@ -84,6 +85,14 @@ export default async function DeliveryPage({
           ) : null}
         </div>
 
+        {/* Compartir entrega */}
+        <Card className="mb-6 p-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+            Compartí esta entrega
+          </p>
+          <ShareDeliveryBar businessName={business.businessName} />
+        </Card>
+
         {score ? (
           <Card className="mb-6 flex items-center gap-4 p-4">
             <div className="text-3xl">🎯</div>
@@ -109,7 +118,10 @@ export default async function DeliveryPage({
                 {p.title ? <span className="ml-2 text-sm font-medium text-stone-700">{p.title}</span> : null}
                 <p className="mt-1 whitespace-pre-wrap text-sm text-stone-600">{p.body}</p>
               </div>
-              <CopyButton text={p.body ?? ""} />
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <CopyButton text={p.body ?? ""} />
+                <WhatsAppCopyButton text={p.body ?? ""} />
+              </div>
             </Card>
           ))}
         </div>
