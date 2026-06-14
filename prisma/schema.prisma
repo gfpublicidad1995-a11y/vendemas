@@ -1,0 +1,876 @@
+// VendeMás — Prisma schema
+// Notas de arquitectura:
+//  - Los "enums" del spec se modelan como String + enums de Zod (ver lib/validators).
+//    Esto mantiene el schema 100% portable entre SQLite (dev) y PostgreSQL (prod).
+//  - Los campos JSON guardan estructuras serializadas (SQLite no soporta listas escalares).
+//  - Para pasar a PostgreSQL: cambiar `provider` del datasource y correr migrate. Nada más.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// 1. User
+// ---------------------------------------------------------------------------
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  email     String?
+  role      String   @default("owner") // owner | admin | client
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businessProfiles BusinessProfile[]
+  whatsappMessages WhatsAppMessage[]
+  revisionRequests RevisionRequest[]
+}
+
+// ---------------------------------------------------------------------------
+// 2. BusinessProfile
+// ---------------------------------------------------------------------------
+model BusinessProfile {
+  id                            String   @id @default(cuid())
+  userId                        String
+  businessName                  String
+  category                      String
+  description                   String?
+  city                          String?
+  country                       String?
+  targetAudience                String?
+  toneOfVoice                   String?
+  mainOffer                     String?
+  instagramHandle               String?
+  facebookPage                  String?
+  whatsappNumber                String?
+  monthlyAdBudget               Float?
+  dailyDigestEnabled            Boolean  @default(true)
+  dailyDigestTime               String   @default("20:30")
+  timezone                      String   @default("America/Montevideo")
+  digestWhatsappOptIn           Boolean  @default(false)
+  consentToAnalyzeConversations Boolean  @default(false)
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brandKit              BrandKit?
+  marketStrategy        MarketStrategy?
+  assets                Asset[]
+  contentOrders         ContentOrder[]
+  contentApprovals      ContentApproval[]
+  revisionRequests      RevisionRequest[]
+  whatsappMessages      WhatsAppMessage[]
+  conversationThreads   ConversationThread[]
+  conversationInsights  ConversationInsight[]
+  faqInsights           FaqInsight[]
+  objectionInsights     ObjectionInsight[]
+  contentOpportunities  ContentOpportunity[]
+  dailyDigests          DailyDigest[]
+  scheduledJobs         ScheduledJob[]
+  opportunityAlerts     OpportunityAlert[]
+  suggestedReplies      SuggestedReply[]
+  contentCalendars      ContentCalendar[]
+  weeklyReports         WeeklyReport[]
+  voiceBriefs           VoiceBrief[]
+  budgetPlans           BudgetPlan[]
+  offerSuggestions      OfferSuggestion[]
+  visualCreatives       VisualCreative[]
+  visualGenerationJobs  VisualGenerationJob[]
+  creativeVariants      CreativeVariant[]
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// 3. BrandKit
+// ---------------------------------------------------------------------------
+model BrandKit {
+  id                String   @id @default(cuid())
+  businessProfileId String   @unique
+  logoUrl           String?
+  primaryColor      String?
+  secondaryColor    String?
+  fontStyle         String?
+  toneOfVoice       String?
+  forbiddenWords    Json?
+  preferredWords    Json?
+  visualStyle       String?
+  exampleCaptions   Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// 4. Asset
+// ---------------------------------------------------------------------------
+model Asset {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  type              String // logo | product_photo | founder_photo | avatar_video | reference_image | other
+  url               String
+  filename          String?
+  mimeType          String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+
+  businessProfile BusinessProfile  @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  visualCreatives VisualCreative[]
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 5. ContentOrder
+// ---------------------------------------------------------------------------
+model ContentOrder {
+  id                 String   @id @default(cuid())
+  businessProfileId  String
+  sourceInsightId    String?
+  sourceDigestItemId String?
+  type               String // content_pack | ads_pack | carousel | video_script | full_campaign | insight_based_content_pack | daily_digest_content_pack | quick_campaign
+  status             String   @default("draft") // draft | collecting_info | ready_to_generate | generating | completed | delivered | failed
+  objective          String?
+  offer              String?
+  productOrService   String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  businessProfile      BusinessProfile       @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  sourceInsight        ConversationInsight?  @relation(fields: [sourceInsightId], references: [id])
+  sourceDigestItem     DailyDigestItem?      @relation(fields: [sourceDigestItemId], references: [id])
+  contentPieces        ContentPiece[]
+  contentApprovals     ContentApproval[]
+  revisionRequests     RevisionRequest[]
+  campaignDrafts       CampaignDraft[]
+  deliveryLinks        DeliveryLink[]
+  visualCreatives      VisualCreative[]
+  creativeVariants     CreativeVariant[]
+  visualGenerationJobs VisualGenerationJob[]
+
+  @@index([businessProfileId])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// 6. ContentPiece
+// ---------------------------------------------------------------------------
+model ContentPiece {
+  id             String   @id @default(cuid())
+  contentOrderId String
+  type           String // feed_image | story | carousel_slide | carousel_pack | ad_copy | video_script | campaign_structure | whatsapp_reply | content_idea
+  title          String?
+  body           String?
+  format         String?
+  fileUrl        String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  contentOrder     ContentOrder      @relation(fields: [contentOrderId], references: [id], onDelete: Cascade)
+  visualCreatives  VisualCreative[]
+  revisionRequests RevisionRequest[]
+  contentScores    ContentScore[]
+
+  @@index([contentOrderId])
+}
+
+// ---------------------------------------------------------------------------
+// 7. ContentApproval
+// ---------------------------------------------------------------------------
+model ContentApproval {
+  id                String    @id @default(cuid())
+  contentOrderId    String
+  businessProfileId String
+  status            String    @default("pending") // pending | approved | changes_requested | rejected
+  feedback          String?
+  requestedAction   String?
+  approvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  contentOrder    ContentOrder    @relation(fields: [contentOrderId], references: [id], onDelete: Cascade)
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@index([contentOrderId])
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 8. RevisionRequest
+// ---------------------------------------------------------------------------
+model RevisionRequest {
+  id                String   @id @default(cuid())
+  contentOrderId    String
+  contentPieceId    String?
+  businessProfileId String
+  requestedByUserId String
+  instruction       String
+  status            String   @default("pending") // pending | processing | completed | failed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  contentOrder    ContentOrder    @relation(fields: [contentOrderId], references: [id], onDelete: Cascade)
+  contentPiece    ContentPiece?   @relation(fields: [contentPieceId], references: [id])
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  requestedBy     User            @relation(fields: [requestedByUserId], references: [id])
+
+  @@index([contentOrderId])
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 9. CampaignDraft
+// ---------------------------------------------------------------------------
+model CampaignDraft {
+  id                   String   @id @default(cuid())
+  contentOrderId       String
+  objective            String?
+  budget               Float?
+  audience             String?
+  placements           Json?
+  adCopies             Json
+  creatives            Json
+  recommendedPlacements Json?
+  creativeVariants     Json?
+  placementValidation  Json?
+  creativeSpecVersion  String?
+  status               String   @default("draft") // draft | pending_approval | approved | rejected | published | paused
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  contentOrder ContentOrder @relation(fields: [contentOrderId], references: [id], onDelete: Cascade)
+
+  @@index([contentOrderId])
+}
+
+// ---------------------------------------------------------------------------
+// 10. DeliveryLink
+// ---------------------------------------------------------------------------
+model DeliveryLink {
+  id             String    @id @default(cuid())
+  contentOrderId String
+  token          String    @unique
+  url            String
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  contentOrder ContentOrder @relation(fields: [contentOrderId], references: [id], onDelete: Cascade)
+
+  @@index([contentOrderId])
+}
+
+// ---------------------------------------------------------------------------
+// 11. WhatsAppMessage
+// ---------------------------------------------------------------------------
+model WhatsAppMessage {
+  id                String   @id @default(cuid())
+  userId            String?
+  businessProfileId String?
+  phone             String
+  direction         String // inbound | outbound
+  messageType       String   @default("text") // text | image | video | audio | document
+  content           String?
+  mediaUrl          String?
+  rawPayload        Json?
+  createdAt         DateTime @default(now())
+
+  user            User?            @relation(fields: [userId], references: [id])
+  businessProfile BusinessProfile? @relation(fields: [businessProfileId], references: [id])
+  voiceBriefs     VoiceBrief[]
+
+  @@index([phone])
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 12. ConversationThread
+// ---------------------------------------------------------------------------
+model ConversationThread {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  customerPhoneHash String
+  customerName      String?
+  status            String   @default("open") // open | closed | archived
+  lastMessageAt     DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile BusinessProfile      @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  messages        ConversationMessage[]
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 13. ConversationMessage
+// ---------------------------------------------------------------------------
+model ConversationMessage {
+  id                   String   @id @default(cuid())
+  conversationThreadId String
+  direction            String // inbound | outbound
+  messageType          String   @default("text") // text | image | video | audio | document
+  content              String?
+  normalizedContent    String?
+  detectedIntent       String?
+  sentiment            String?
+  metadata             Json?
+  createdAt            DateTime @default(now())
+
+  thread           ConversationThread @relation(fields: [conversationThreadId], references: [id], onDelete: Cascade)
+  suggestedReplies SuggestedReply[]
+
+  @@index([conversationThreadId])
+}
+
+// ---------------------------------------------------------------------------
+// 14. ConversationInsight
+// ---------------------------------------------------------------------------
+model ConversationInsight {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  type              String // faq | objection | pain_point | purchase_intent | content_opportunity | campaign_opportunity | product_interest
+  title             String
+  description       String?
+  frequency         Int      @default(1)
+  examples          Json?
+  confidence        Float    @default(0.5)
+  status            String   @default("new") // new | reviewed | used | dismissed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile      BusinessProfile      @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  contentOrders        ContentOrder[]
+  contentOpportunities ContentOpportunity[]
+  suggestedReplies     SuggestedReply[]
+  offerSuggestions     OfferSuggestion[]
+
+  @@index([businessProfileId])
+  @@index([type])
+}
+
+// ---------------------------------------------------------------------------
+// 15. FAQInsight
+// ---------------------------------------------------------------------------
+model FaqInsight {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  question          String
+  suggestedAnswer   String
+  frequency         Int      @default(1)
+  sourceExamples    Json?
+  createdAt         DateTime @default(now())
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 16. ObjectionInsight
+// ---------------------------------------------------------------------------
+model ObjectionInsight {
+  id                      String   @id @default(cuid())
+  businessProfileId       String
+  objection               String
+  suggestedResponse       String
+  recommendedContentIdea  String?
+  frequency               Int      @default(1)
+  createdAt               DateTime @default(now())
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 17. ContentOpportunity
+// ---------------------------------------------------------------------------
+model ContentOpportunity {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  sourceInsightId   String?
+  title             String
+  contentType       String // reel | carousel | story | feed_post | ad | whatsapp_faq
+  angle             String?
+  suggestedCopy     String?
+  priority          String   @default("medium") // low | medium | high
+  status            String   @default("pending") // pending | generated | dismissed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile BusinessProfile      @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  sourceInsight   ConversationInsight? @relation(fields: [sourceInsightId], references: [id])
+  contentScores   ContentScore[]
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 18. DailyDigest
+// ---------------------------------------------------------------------------
+model DailyDigest {
+  id                   String    @id @default(cuid())
+  businessProfileId    String
+  date                 DateTime
+  totalConversations   Int       @default(0)
+  totalMessages        Int       @default(0)
+  topQuestions         Json?
+  topObjections        Json?
+  topProductInterests  Json?
+  contentIdeas         Json?
+  campaignIdeas        Json?
+  recommendedAction    String?
+  status               String    @default("pending") // pending | generated | sent | failed
+  sentAt               DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  businessProfile BusinessProfile   @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  items           DailyDigestItem[]
+
+  @@index([businessProfileId])
+  @@index([date])
+}
+
+// ---------------------------------------------------------------------------
+// 19. DailyDigestItem
+// ---------------------------------------------------------------------------
+model DailyDigestItem {
+  id           String   @id @default(cuid())
+  dailyDigestId String
+  type         String // faq | objection | product_interest | content_idea | campaign_idea | recommendation
+  title        String
+  description  String?
+  frequency    Int?
+  priority     String   @default("medium") // low | medium | high
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  dailyDigest   DailyDigest    @relation(fields: [dailyDigestId], references: [id], onDelete: Cascade)
+  contentOrders ContentOrder[]
+  contentScores ContentScore[]
+
+  @@index([dailyDigestId])
+}
+
+// ---------------------------------------------------------------------------
+// 20. ScheduledJob
+// ---------------------------------------------------------------------------
+model ScheduledJob {
+  id                String    @id @default(cuid())
+  businessProfileId String?
+  type              String // daily_digest | weekly_report | campaign_check | content_reminder
+  status            String    @default("scheduled") // scheduled | running | completed | failed
+  scheduledFor      DateTime
+  startedAt         DateTime?
+  completedAt       DateTime?
+  error             String?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  businessProfile BusinessProfile? @relation(fields: [businessProfileId], references: [id])
+
+  @@index([businessProfileId])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// 21. OpportunityAlert
+// ---------------------------------------------------------------------------
+model OpportunityAlert {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  type              String // content | campaign | sales | objection | faq | product_interest | urgency
+  title             String
+  description       String?
+  source            String?
+  priority          String   @default("medium") // low | medium | high | critical
+  recommendedAction String?
+  status            String   @default("new") // new | reviewed | used | dismissed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 22. SuggestedReply
+// ---------------------------------------------------------------------------
+model SuggestedReply {
+  id                    String   @id @default(cuid())
+  businessProfileId     String
+  conversationMessageId String?
+  insightId             String?
+  triggerType           String // price_objection | delivery_question | payment_question | stock_question | purchase_intent | general_question
+  customerMessage       String?
+  suggestedReply        String
+  tone                  String   @default("friendly") // friendly | professional | direct | persuasive
+  status                String   @default("suggested") // suggested | used | dismissed
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  businessProfile     BusinessProfile      @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  conversationMessage ConversationMessage? @relation(fields: [conversationMessageId], references: [id])
+  insight             ConversationInsight? @relation(fields: [insightId], references: [id])
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 23. ContentCalendar
+// ---------------------------------------------------------------------------
+model ContentCalendar {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  startDate         DateTime
+  endDate           DateTime
+  objective         String?
+  status            String   @default("draft") // draft | active | completed | archived
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile BusinessProfile       @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  items           ContentCalendarItem[]
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 24. ContentCalendarItem
+// ---------------------------------------------------------------------------
+model ContentCalendarItem {
+  id                String   @id @default(cuid())
+  contentCalendarId String
+  date              DateTime
+  contentType       String // story | reel | carousel | feed_post | ad | whatsapp_status
+  title             String
+  angle             String?
+  suggestedCopy     String?
+  suggestedVisual   String?
+  cta               String?
+  status            String   @default("pending") // pending | generated | approved | published | skipped
+  createdAt         DateTime @default(now())
+
+  contentCalendar ContentCalendar @relation(fields: [contentCalendarId], references: [id], onDelete: Cascade)
+
+  @@index([contentCalendarId])
+}
+
+// ---------------------------------------------------------------------------
+// 25. IndustryTemplate
+// ---------------------------------------------------------------------------
+model IndustryTemplate {
+  id           String   @id @default(cuid())
+  industry     String
+  contentType  String // story | reel | carousel | ad | whatsapp_reply | campaign
+  title        String
+  angle        String?
+  structure    Json?
+  exampleCopy  String?
+  suggestedCTA String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([industry])
+}
+
+// ---------------------------------------------------------------------------
+// 26. IndustryPlaybook
+// ---------------------------------------------------------------------------
+model IndustryPlaybook {
+  id                     String   @id @default(cuid())
+  industry               String   @unique
+  commonQuestions        Json?
+  commonObjections       Json?
+  bestContentAngles      Json?
+  bestCampaignObjectives Json?
+  suggestedAudiences     Json?
+  suggestedOffers        Json?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// 27. ContentScore
+// ---------------------------------------------------------------------------
+model ContentScore {
+  id                       String    @id @default(cuid())
+  contentOpportunityId     String?
+  contentPieceId           String?
+  dailyDigestItemId        String?
+  salesPotential           String    @default("medium") // low | medium | high
+  urgency                  String    @default("medium") // low | medium | high
+  confidence               Float     @default(0.5)
+  reason                   String?
+  basedOnConversationsCount Int      @default(0)
+  recommendedPublishDate   DateTime?
+  createdAt                DateTime  @default(now())
+
+  contentOpportunity ContentOpportunity? @relation(fields: [contentOpportunityId], references: [id])
+  contentPiece       ContentPiece?       @relation(fields: [contentPieceId], references: [id])
+  dailyDigestItem    DailyDigestItem?    @relation(fields: [dailyDigestItemId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// 28. WeeklyReport
+// ---------------------------------------------------------------------------
+model WeeklyReport {
+  id                       String    @id @default(cuid())
+  businessProfileId        String
+  weekStartDate            DateTime
+  weekEndDate              DateTime
+  totalConversations       Int       @default(0)
+  totalMessages            Int       @default(0)
+  topQuestions             Json?
+  topObjections            Json?
+  topProductInterests      Json?
+  topPurchaseSignals       Json?
+  recommendedContentPlan   Json?
+  recommendedCampaigns     Json?
+  summary                  String?
+  status                   String    @default("pending") // pending | generated | sent | failed
+  sentAt                   DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 29. VoiceBrief
+// ---------------------------------------------------------------------------
+model VoiceBrief {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  whatsappMessageId String?
+  audioUrl          String
+  transcription     String?
+  extractedBrief    Json?
+  status            String   @default("received") // received | transcribed | processed | failed
+  createdAt         DateTime @default(now())
+
+  businessProfile BusinessProfile  @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  whatsappMessage WhatsAppMessage? @relation(fields: [whatsappMessageId], references: [id])
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 30. BudgetPlan
+// ---------------------------------------------------------------------------
+model BudgetPlan {
+  id                      String   @id @default(cuid())
+  businessProfileId       String
+  monthlyBudget           Float
+  currency                String   @default("USD")
+  objective               String?
+  recommendedDistribution Json?
+  explanation             String?
+  status                  String   @default("draft") // draft | approved | active | archived
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 31. OfferSuggestion
+// ---------------------------------------------------------------------------
+model OfferSuggestion {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  sourceInsightId   String?
+  title             String
+  description       String?
+  offerType         String // discount | bundle | free_shipping | limited_time | payment_plan | bonus | seasonal
+  suggestedCopy     String?
+  reason            String?
+  priority          String   @default("medium") // low | medium | high
+  status            String   @default("pending") // pending | used | dismissed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businessProfile BusinessProfile      @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  sourceInsight   ConversationInsight? @relation(fields: [sourceInsightId], references: [id])
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 32. VisualCreative
+// ---------------------------------------------------------------------------
+model VisualCreative {
+  id                   String   @id @default(cuid())
+  businessProfileId    String
+  contentOrderId       String?
+  contentPieceId       String?
+  assetId              String?
+  type                 String // feed_image | story_image | ad_image | carousel_slide | video | ugc_video | avatar_video | thumbnail
+  placement            String?
+  prompt               String
+  negativePrompt       String?
+  format               String // square_1_1 | vertical_4_5 | story_9_16 | landscape_16_9 | custom
+  aspectRatio          String
+  width                Int?
+  height               Int?
+  safeZoneTopPercent   Float?
+  safeZoneBottomPercent Float?
+  safeZoneSidePercent  Float?
+  isPlacementReady     Boolean  @default(false)
+  status               String   @default("pending") // pending | generating | completed | failed
+  validationStatus     String   @default("pending") // pending | valid | warning | invalid
+  validationNotes      Json?
+  fileUrl              String?
+  provider             String   @default("mock") // mock | higgsfield
+  providerJobId        String?
+  metadata             Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  businessProfile  BusinessProfile   @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  contentOrder     ContentOrder?     @relation(fields: [contentOrderId], references: [id])
+  contentPiece     ContentPiece?     @relation(fields: [contentPieceId], references: [id])
+  asset            Asset?            @relation(fields: [assetId], references: [id])
+  creativeVariants CreativeVariant[]
+
+  @@index([businessProfileId])
+  @@index([contentOrderId])
+}
+
+// ---------------------------------------------------------------------------
+// 33. VisualPromptTemplate
+// ---------------------------------------------------------------------------
+model VisualPromptTemplate {
+  id                String   @id @default(cuid())
+  industry          String?
+  contentType       String // feed_image | story_image | ad_image | carousel_slide | video | ugc_video | avatar_video | thumbnail
+  title             String
+  promptStructure   String
+  recommendedFormat String?
+  styleTags         Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([industry])
+}
+
+// ---------------------------------------------------------------------------
+// 34. VisualGenerationJob
+// ---------------------------------------------------------------------------
+model VisualGenerationJob {
+  id                String    @id @default(cuid())
+  businessProfileId String
+  contentOrderId    String?
+  provider          String    @default("mock") // mock | higgsfield
+  status            String    @default("queued") // queued | running | completed | failed
+  input             Json
+  output            Json?
+  error             String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  contentOrder    ContentOrder?   @relation(fields: [contentOrderId], references: [id])
+
+  @@index([businessProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// 35. MetaCreativeSpec
+// ---------------------------------------------------------------------------
+model MetaCreativeSpec {
+  id                          String   @id @default(cuid())
+  placement                   String // FACEBOOK_FEED | INSTAGRAM_FEED | FACEBOOK_STORIES | ...
+  format                      String // IMAGE | VIDEO | CAROUSEL | STORY | REEL | UGC_VIDEO | THUMBNAIL
+  recommendedAspectRatio      String
+  recommendedWidth            Int
+  recommendedHeight           Int
+  premiumWidth                Int?
+  premiumHeight               Int?
+  minWidth                    Int?
+  minHeight                   Int?
+  maxFileSizeMb               Int?
+  supportedFileTypes          Json
+  safeZoneTopPercent          Float?
+  safeZoneBottomPercent       Float?
+  safeZoneSidePercent         Float?
+  primaryTextRecommendation   String?
+  headlineRecommendation      String?
+  descriptionRecommendation   String?
+  notes                       Json?
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@unique([placement, format])
+  @@index([placement])
+}
+
+// ---------------------------------------------------------------------------
+// 36. CreativeVariant
+// ---------------------------------------------------------------------------
+model CreativeVariant {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  contentOrderId    String?
+  visualCreativeId  String?
+  placement         String
+  format            String
+  aspectRatio       String
+  width             Int
+  height            Int
+  fileUrl           String?
+  prompt            String
+  safeZoneApplied   Boolean  @default(false)
+  validationStatus  String   @default("pending") // pending | valid | warning | invalid
+  validationNotes   Json?
+  createdAt         DateTime @default(now())
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  contentOrder    ContentOrder?   @relation(fields: [contentOrderId], references: [id])
+  visualCreative  VisualCreative? @relation(fields: [visualCreativeId], references: [id])
+
+  @@index([businessProfileId])
+  @@index([contentOrderId])
+}
+
+// ---------------------------------------------------------------------------
+// 37. MarketStrategy — inteligencia de marketing (frameworks Felipe Vergara)
+// ---------------------------------------------------------------------------
+model MarketStrategy {
+  id                     String   @id @default(cuid())
+  businessProfileId      String   @unique
+  brandDna               Json? // ADN: identidad, tono, estilo, valores, propuesta de valor, precio
+  avatar                 Json? // 16 deseos de Reiss, dolores, deseos, demográficos
+  offer                  Json? // qué ofrece, diferenciales, oferta
+  competitors            Json? // competidores de la zona: nombre, hooks, ofertas, ángulo
+  sevenSuitcases         Json? // 7 maletas: público, problema, solución, diferenciales, objeciones, testimonios, garantía
+  dominantAwarenessLevel String   @default("problem") // unaware | problem | solution | product | most_aware
+  awarenessMap           Json? // copy/ángulo por nivel de consciencia
+  scriptGuide            Json? // guía de guiones (estructuras de reel)
+  creativeMatrix         Json? // matriz de diversificación (deseo × nivel → hook, reel/imagen)
+  budgetCalc             Json? // calculadora: número mágico, ROAS objetivo, costo por compra, inversión
+  campaignStructure      Json? // estructura: Presentación, Evaluación, Conversión, Ascensión
+  summary                String?
+  status                 String   @default("generated") // draft | generated
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+}

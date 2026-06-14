@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma
+/lib/generated/prisma
+*.db
+*.db-journal
+
+# tunnel / tooling
+cloudflared.exe
+.playwright-mcp/
+
+# adelanto / artefactos
+adelanto-vendemas*.pdf
+adelanto-vendemas*.html
+adelanto-vendemas*.png
