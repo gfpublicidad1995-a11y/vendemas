@@ -51,7 +51,7 @@ export default async function OrdersPage() {
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <span className="text-xs text-stone-400">
-                  {o._count.contentPieces} piezas · {o._count.visualCreatives} visuales
+                  {o._count.contentPieces} piezas · {o._count.visualCreatives} imágenes
                 </span>
                 <Badge tone={toneForStatus(o.status)}>{orderStatusLabel(o.status)}</Badge>
               </div>

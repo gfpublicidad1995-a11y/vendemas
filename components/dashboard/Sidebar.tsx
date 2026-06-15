@@ -44,7 +44,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/dashboard/orders", label: "Pedidos", icon: ClipboardList },
       { href: "/dashboard/content", label: "Piezas generadas", icon: FileText },
-      { href: "/dashboard/visuals", label: "Visuales", icon: ImageIcon },
+      { href: "/dashboard/visuals", label: "Imágenes", icon: ImageIcon },
       { href: "/dashboard/campaigns", label: "Campañas", icon: Megaphone },
       { href: "/dashboard/creative-specs", label: "Specs Meta Ads", icon: Ruler },
       { href: "/dashboard/deliveries", label: "Entregas", icon: PackageCheck },
@@ -55,7 +55,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/dashboard/strategy", label: "Estrategia", icon: Target },
       { href: "/dashboard/conversations", label: "Conversaciones", icon: MessagesSquare },
-      { href: "/dashboard/insights", label: "Insights", icon: Lightbulb },
+      { href: "/dashboard/insights", label: "Aprendizajes", icon: Lightbulb },
       { href: "/dashboard/opportunities", label: "Oportunidades", icon: Radar },
       { href: "/dashboard/digests", label: "Ideas para mañana", icon: Sunrise },
       { href: "/dashboard/reports/weekly", label: "Reporte semanal", icon: BarChart3 },

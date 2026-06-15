@@ -20,10 +20,13 @@ export default async function DeliveriesPage() {
     <div>
       <PageHeader
         title="Entregas"
-        description="Páginas privadas con token donde el emprendedor ve y aprueba su contenido."
+        description="El link privado que le mandás a cada cliente para que vea su contenido y lo apruebe."
       />
       {links.length === 0 ? (
-        <EmptyState title="Sin entregas todavía" />
+        <EmptyState
+          title="Sin entregas todavía"
+          description="Cuando generás contenido para un negocio, acá aparece el link para compartirle al cliente."
+        />
       ) : (
         <Card className="divide-y divide-stone-100">
           {links.map((l) => (

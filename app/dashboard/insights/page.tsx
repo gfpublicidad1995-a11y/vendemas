@@ -14,11 +14,14 @@ export default async function InsightsPage() {
   return (
     <div>
       <PageHeader
-        title="Insights"
-        description="Lo que detectamos en las conversaciones: dudas, objeciones, intereses y oportunidades."
+        title="Aprendizajes de tus clientes"
+        description="Lo que detectamos en las charlas: dudas, objeciones, intereses y oportunidades para vender mejor."
       />
       {insights.length === 0 ? (
-        <EmptyState title="Sin insights todavía" />
+        <EmptyState
+          title="Sin aprendizajes todavía"
+          description="Aparecen solos a medida que hay charlas con clientes."
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {insights.map((i) => (

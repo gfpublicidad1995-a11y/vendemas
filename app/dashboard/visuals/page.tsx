@@ -15,8 +15,8 @@ export default async function VisualsPage() {
   return (
     <div>
       <PageHeader
-        title="Visuales"
-        description="Piezas generadas por ubicación. Cada formato tiene su medida, ratio y validación."
+        title="Imágenes"
+        description="Las imágenes de tus anuncios en los distintos tamaños de las redes. Tocá una para ver el detalle o subir la versión final."
       />
       {visuals.length === 0 ? (
         <EmptyState title="Sin visuales todavía" description="Generá una Campaña Rápida desde el simulador." />

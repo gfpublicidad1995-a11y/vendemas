@@ -36,7 +36,9 @@ export default async function ConversationsPage() {
                   {t.businessProfile.businessName} · {t._count.messages} mensajes · {formatDateTime(t.lastMessageAt)}
                 </div>
               </div>
-              <Badge tone={t.status === "open" ? "green" : "gray"}>{t.status}</Badge>
+              <Badge tone={t.status === "open" ? "green" : "gray"}>
+                {t.status === "open" ? "Abierta" : "Cerrada"}
+              </Badge>
             </Link>
           ))}
         </Card>

@@ -53,9 +53,9 @@ export default async function BusinessesPage() {
                 ) : null}
                 <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-stone-500">
                   <span>{b._count.contentOrders} pedidos</span>
-                  <span>{b._count.conversationThreads} conversaciones</span>
-                  <span>{b._count.conversationInsights} insights</span>
-                  <span>{b._count.visualCreatives} visuales</span>
+                  <span>{b._count.conversationThreads} charlas</span>
+                  <span>{b._count.conversationInsights} aprendizajes</span>
+                  <span>{b._count.visualCreatives} imágenes</span>
                 </div>
               </Card>
             </Link>
