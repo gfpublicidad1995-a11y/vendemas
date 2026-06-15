@@ -23,7 +23,7 @@ const EnvSchema = z.object({
 
   // Selectores de proveedor (mock por defecto).
   WHATSAPP_PROVIDER: z.enum(["mock", "cloud"]).default("mock"),
-  AI_PROVIDER: z.enum(["mock", "anthropic"]).default("mock"),
+  AI_PROVIDER: z.enum(["mock", "anthropic", "gemini"]).default("mock"),
   META_PROVIDER: z.enum(["mock", "real"]).default("mock"),
   STORAGE_PROVIDER: z
     .enum(["local", "s3", "r2", "supabase"])
@@ -35,8 +35,9 @@ const EnvSchema = z.object({
   HIGGSFIELD_MCP_AUTH_MODE: z.string().optional().default(""),
   HIGGSFIELD_WORKSPACE_ID: z.string().optional().default(""),
 
-  // IA real (futuro)
+  // IA real
   ANTHROPIC_API_KEY: z.string().optional().default(""),
+  GEMINI_API_KEY: z.string().optional().default(""),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
