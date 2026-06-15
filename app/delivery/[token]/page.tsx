@@ -4,13 +4,13 @@ import { Badge, Card, SectionTitle } from "@/components/ui";
 import {
   orderTypeLabel,
   contentPieceTypeLabel,
-  validationStatusLabel,
   toneForStatus,
   awarenessLevelLabel,
 } from "@/lib/labels";
 import { asRecord } from "@/lib/json";
 
 const s = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : String(v));
+const NIVEL: Record<string, string> = { high: "alto", medium: "medio", low: "bajo" };
 import { CopyButton } from "@/components/delivery/CopyButton";
 import { ShareDeliveryBar, WhatsAppCopyButton } from "@/components/delivery/ShareButtons";
 import { AdCreativePreview } from "@/components/delivery/AdCreativePreview";
@@ -22,10 +22,10 @@ import {
 export const dynamic = "force-dynamic";
 
 const BUCKETS: { ratios: string[]; title: string; note?: string }[] = [
-  { ratios: ["4:5"], title: "Feed 4:5 — Facebook e Instagram" },
-  { ratios: ["9:16"], title: "Stories / Reels 9:16", note: "Texto y CTA dentro de la zona segura." },
-  { ratios: ["1:1"], title: "Cuadrado 1:1 — Carrusel y Marketplace" },
-  { ratios: ["1.91:1"], title: "Landscape 1.91:1 — Columna derecha / anuncio de enlace" },
+  { ratios: ["4:5"], title: "Vertical — para el feed de Facebook e Instagram" },
+  { ratios: ["9:16"], title: "Para Historias y Reels" },
+  { ratios: ["1:1"], title: "Cuadrado — para publicaciones y carrusel" },
+  { ratios: ["1.91:1"], title: "Ancho — para algunos anuncios" },
 ];
 
 const VIDEO_TYPES = ["video", "ugc_video", "avatar_video"];
@@ -113,9 +113,11 @@ export default async function DeliveryPage({
             <div>
               <div className="flex items-center gap-2">
                 <Badge tone={score.salesPotential === "high" ? "green" : "amber"}>
-                  Potencial de venta: {score.salesPotential}
+                  Potencial de venta: {NIVEL[score.salesPotential] ?? score.salesPotential}
                 </Badge>
-                <Badge tone={score.urgency === "high" ? "red" : "amber"}>Urgencia: {score.urgency}</Badge>
+                <Badge tone={score.urgency === "high" ? "red" : "amber"}>
+                  Urgencia: {NIVEL[score.urgency] ?? score.urgency}
+                </Badge>
               </div>
               <p className="mt-1 text-sm text-stone-500">{score.reason}</p>
             </div>
@@ -202,10 +204,10 @@ export default async function DeliveryPage({
         {/* Visuales por ubicación */}
         {order.visualCreatives.some((v) => !VIDEO_TYPES.includes(v.type)) ? (
           <>
-            <SectionTitle>Piezas visuales por ubicación</SectionTitle>
-            <div className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-amber-200">
-              Estas piezas fueron preparadas para distintas ubicaciones de Meta Ads. No uses una sola imagen para
-              todos los formatos si querés mejores resultados.
+            <SectionTitle>Tus imágenes para los anuncios</SectionTitle>
+            <div className="mb-3 rounded-xl bg-stone-50 p-3 text-sm text-stone-600 ring-1 ring-stone-100">
+              Te dejamos cada imagen en los tamaños que usan Facebook e Instagram. Usá la que corresponde según dónde la
+              publiques (feed, historias, etc.).
             </div>
             <div className="mb-6 space-y-5">
               {BUCKETS.map((bucket) => {
@@ -245,17 +247,8 @@ export default async function DeliveryPage({
                               </div>
                             )}
                             <div className="p-2 text-xs">
-                              <div className="flex items-center justify-between">
-                                <span className="text-stone-500">{v.width}×{v.height}</span>
-                                <Badge tone={toneForStatus(v.validationStatus)}>
-                                  {validationStatusLabel(v.validationStatus)}
-                                </Badge>
-                              </div>
-                              <div className="mt-1 text-stone-400">{v.placement}</div>
                               {meta.angleLabel ? (
-                                <div className="mt-0.5 font-medium text-purple-600">
-                                  {String(meta.angleLabel)}
-                                </div>
+                                <div className="font-medium text-purple-600">{String(meta.angleLabel)}</div>
                               ) : null}
                               {meta.composed ? null : (
                                 <a
@@ -263,7 +256,7 @@ export default async function DeliveryPage({
                                   target="_blank"
                                   rel="noreferrer"
                                   download
-                                  className="mt-2 block rounded-md bg-stone-100 py-1 text-center text-stone-600 hover:bg-stone-200"
+                                  className="mt-1 block rounded-md bg-stone-100 py-1 text-center text-stone-600 hover:bg-stone-200"
                                 >
                                   Descargar
                                 </a>
