@@ -75,6 +75,20 @@ export default async function DeliveryPage({
     (p) => !["ad_copy", "content_idea", "story"].includes(p.type)
   );
 
+  // Resumen en lenguaje de persona de lo que incluye la entrega.
+  const imgCount = order.visualCreatives.filter((v) => !VIDEO_TYPES.includes(v.type)).length;
+  const videoCount = order.visualCreatives.filter((v) => VIDEO_TYPES.includes(v.type)).length;
+  const countType = (t: string) => order.contentPieces.filter((p) => p.type === t).length;
+  const resumen = [
+    countType("story") ? { icon: "📱", label: `${countType("story")} historias para Instagram y Facebook` } : null,
+    countType("ad_copy") ? { icon: "🖼️", label: `${countType("ad_copy")} anuncios listos para publicar` } : null,
+    countType("carousel_pack") ? { icon: "🎠", label: `Un carrusel para tus redes` } : null,
+    countType("content_idea") ? { icon: "✍️", label: `Textos listos para copiar y pegar` } : null,
+    countType("video_script") ? { icon: "🎬", label: `Un guion para grabar un video o reel` } : null,
+    imgCount ? { icon: "🎨", label: `${imgCount} imágenes en los tamaños que usan las redes` } : null,
+    videoCount ? { icon: "🎥", label: `${videoCount} ${videoCount === 1 ? "video" : "videos"}` } : null,
+  ].filter((x): x is { icon: string; label: string } => x !== null);
+
   return (
     <div className="min-h-screen bg-stone-50">
       <div className="mx-auto max-w-3xl px-4 py-8">
@@ -98,6 +112,25 @@ export default async function DeliveryPage({
             </Badge>
           ) : null}
         </div>
+
+        {/* Resumen: qué incluye la entrega (en lenguaje de persona) */}
+        {resumen.length ? (
+          <Card className="mb-6 p-5">
+            <p className="text-sm font-semibold text-stone-800">📦 Esto es lo que te preparamos</p>
+            <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+              {resumen.map((r, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-stone-700">
+                  <span>{r.icon}</span>
+                  <span>{r.label}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-stone-500">
+              Mirá todo acá abajo. Si te gusta, tocá <span className="font-medium text-emerald-700">Aprobar</span>; si
+              querés cambiar algo, escribinos y lo ajustamos.
+            </p>
+          </Card>
+        ) : null}
 
         {/* Compartir entrega */}
         <Card className="mb-6 p-4">
