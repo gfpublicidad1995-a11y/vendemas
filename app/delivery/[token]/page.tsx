@@ -71,8 +71,10 @@ export default async function DeliveryPage({
   const copies = order.contentPieces.filter((p) =>
     ["ad_copy", "content_idea", "story"].includes(p.type)
   );
+  // En la entrega al cliente no mostramos la "estructura de campaña" (es jerga de
+  // operador: públicos, presupuesto, ubicaciones de Meta). Queda en el dashboard.
   const others = order.contentPieces.filter(
-    (p) => !["ad_copy", "content_idea", "story"].includes(p.type)
+    (p) => !["ad_copy", "content_idea", "story", "campaign_structure"].includes(p.type)
   );
 
   // Resumen en lenguaje de persona de lo que incluye la entrega.
@@ -201,7 +203,7 @@ export default async function DeliveryPage({
         {/* Guiones / estructura */}
         {others.length > 0 ? (
           <>
-            <SectionTitle>Guiones y estructura</SectionTitle>
+            <SectionTitle>Guion del reel y carrusel</SectionTitle>
             <div className="mb-6 space-y-2">
               {others.map((p) => (
                 <Card key={p.id} className="p-4">
