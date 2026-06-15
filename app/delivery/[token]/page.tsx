@@ -6,8 +6,11 @@ import {
   contentPieceTypeLabel,
   validationStatusLabel,
   toneForStatus,
+  awarenessLevelLabel,
 } from "@/lib/labels";
 import { asRecord } from "@/lib/json";
+
+const s = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : String(v));
 import { CopyButton } from "@/components/delivery/CopyButton";
 import { ShareDeliveryBar, WhatsAppCopyButton } from "@/components/delivery/ShareButtons";
 import { AdCreativePreview } from "@/components/delivery/AdCreativePreview";
@@ -38,7 +41,7 @@ export default async function DeliveryPage({
     include: {
       contentOrder: {
         include: {
-          businessProfile: { include: { brandKit: true, assets: true } },
+          businessProfile: { include: { brandKit: true, assets: true, marketStrategy: true } },
           contentPieces: { orderBy: { createdAt: "asc" } },
           campaignDrafts: true,
           visualCreatives: true,
@@ -56,6 +59,10 @@ export default async function DeliveryPage({
   const productPhotoUrl = assetUrl("product_photo");
   const logoUrl = assetUrl("logo") ?? business.brandKit?.logoUrl ?? null;
   const founderPhotoUrl = assetUrl("founder_photo");
+  const strat = business.marketStrategy;
+  const stratBrand = asRecord(strat?.brandDna);
+  const stratAvatar = asRecord(strat?.avatar);
+  const stratMaletas = asRecord(strat?.sevenSuitcases);
   const pieceIds = order.contentPieces.map((p) => p.id);
   const score = pieceIds.length
     ? await prisma.contentScore.findFirst({ where: { contentPieceId: { in: pieceIds } } })
@@ -112,6 +119,29 @@ export default async function DeliveryPage({
               </div>
               <p className="mt-1 text-sm text-stone-500">{score.reason}</p>
             </div>
+          </Card>
+        ) : null}
+
+        {/* La estrategia detrás del contenido */}
+        {strat ? (
+          <Card className="mb-6 p-5">
+            <SectionTitle>🧭 La estrategia detrás</SectionTitle>
+            <p className="mt-1 text-sm text-stone-700">{s(stratBrand.propuestaValor)}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-100">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">A quién le hablamos</p>
+                <p className="mt-0.5 text-sm text-stone-700">{s(stratAvatar.publico)}</p>
+              </div>
+              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-100">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">Qué problema resolvemos</p>
+                <p className="mt-0.5 text-sm text-stone-700">{s(stratMaletas.problema)}</p>
+              </div>
+              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-100">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">Momento del cliente</p>
+                <p className="mt-0.5 text-sm text-stone-700">{awarenessLevelLabel(strat.dominantAwarenessLevel)}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-stone-400">Cada pieza de abajo está pensada con esta estrategia.</p>
           </Card>
         ) : null}
 
