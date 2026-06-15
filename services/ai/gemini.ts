@@ -313,14 +313,14 @@ export class GeminiAIContentService implements AIContentService {
           {
             reply: GSTR,
             extracted: gobj(
-              { businessName: GSTR, category: GSTR, product: GSTR, offer: GSTR, budget: GSTR },
+              { businessName: GSTR, category: GSTR, product: GSTR, offer: GSTR, budget: GSTR, description: GSTR },
               [],
             ),
             readyToGenerate: { type: "BOOLEAN" },
           },
           ["reply", "extracted", "readyToGenerate"],
         ),
-        `Sos el asistente de WhatsApp de VendeMás. Charlás con un emprendedor para armarle una "Campaña Rápida" de contenido y anuncios. Respondé natural, cálido y breve (estilo WhatsApp) a lo ÚLTIMO que escribió, y andá juntando lo que falta: nombre del negocio, qué producto o servicio quiere promocionar, el precio u oferta, y cuánto puede invertir por día. Pedí UNA cosa por vez, sin abrumar. Si pregunta algo, respondéselo. En 'extracted' poné SOLO los datos que el cliente ya dijo (no inventes; dejá vacío lo que no dijo). Poné readyToGenerate=true SOLO cuando ya tengas producto + (precio u oferta) + presupuesto.\n\nConversación hasta ahora:\n${histText}\n\nDatos ya recolectados: ${draftText}`,
+        `Sos el asistente de WhatsApp de VendeMás. Charlás con un emprendedor para armarle una "Campaña Rápida" de contenido y anuncios. Respondé natural, cálido y breve (estilo WhatsApp) a lo ÚLTIMO que escribió, y andá juntando lo que falta: nombre del negocio, qué producto o servicio quiere promocionar, el precio u oferta, y cuánto puede invertir por día. Pedí UNA cosa por vez, sin abrumar. Si pregunta algo, respondéselo. En 'extracted' poné SOLO los datos que el cliente ya dijo (no inventes; dejá vacío lo que no dijo); en 'description' resumí en 1-2 frases de qué se trata el negocio y qué lo hace especial según lo que fue contando (si todavía no hay info, dejala vacía). Poné readyToGenerate=true SOLO cuando ya tengas producto + (precio u oferta) + presupuesto.\n\nConversación hasta ahora:\n${histText}\n\nDatos ya recolectados: ${draftText}`,
         context,
       );
     } catch (e) {

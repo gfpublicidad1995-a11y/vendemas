@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { quickCampaignService } from "@/services/content/quickCampaignService";
+import { marketStrategyService } from "@/services/strategy/marketStrategyService";
 import { whatsappTemplates } from "@/services/whatsapp";
 import { aiService } from "@/services/ai";
 import type { BusinessContext, ChatTurn } from "@/services/ai";
@@ -147,6 +148,16 @@ export async function handleTurn(
         }
       }
 
+      // ADN/estrategia: si el negocio aún no tiene, la generamos para que el
+      // contenido salga "estrategia-grade" (sus hooks alimentan los anuncios).
+      // Nunca bloquea la campaña: si falla, seguimos igual.
+      try {
+        const hasStrategy = await prisma.marketStrategy.findUnique({ where: { businessProfileId } });
+        if (!hasStrategy) await marketStrategyService.generateStrategy(businessProfileId);
+      } catch (e) {
+        console.error("[whatsapp] generateStrategy →", e);
+      }
+
       const order = await quickCampaignService.generateQuickCampaignOrder(businessProfileId, {
         productOrService: session.draft.product,
         offer: session.draft.offer,
@@ -181,9 +192,14 @@ async function resolveBusiness(session: SimSession): Promise<string> {
     update: {},
     create: { name, phone: session.phone, role: "owner" },
   });
+  const description = session.draft.description?.trim() || null;
   const existing = await prisma.businessProfile.findFirst({
     where: { userId: user.id, businessName: name },
   });
+  // Si ya existe pero le falta la descripción, la completamos con lo que junta el chat.
+  if (existing && !existing.description && description) {
+    await prisma.businessProfile.update({ where: { id: existing.id }, data: { description } });
+  }
   const business =
     existing ??
     (await prisma.businessProfile.create({
@@ -193,6 +209,7 @@ async function resolveBusiness(session: SimSession): Promise<string> {
         category: session.draft.category?.trim() || "General",
         country: "Uruguay",
         mainOffer: session.draft.offer || session.draft.product || null,
+        description,
         toneOfVoice: "Cercano, simple y vendedor",
         consentToAnalyzeConversations: true,
         digestWhatsappOptIn: true,

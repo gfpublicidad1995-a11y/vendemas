@@ -89,6 +89,8 @@ export interface ChatExtracted {
   product?: string;
   offer?: string;
   budget?: string;
+  /** Resumen del negocio (qué vende y qué lo hace especial) según lo que contó el cliente. */
+  description?: string;
 }
 
 export interface ChatReplyResult {

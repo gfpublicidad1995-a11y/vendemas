@@ -311,14 +311,15 @@ export class AnthropicAIContentService implements AIContentService {
                 product: { type: "string" },
                 offer: { type: "string" },
                 budget: { type: "string" },
+                description: { type: "string" },
               },
-              ["businessName", "category", "product", "offer", "budget"],
+              ["businessName", "category", "product", "offer", "budget", "description"],
             ),
             readyToGenerate: { type: "boolean" },
           },
           ["reply", "extracted", "readyToGenerate"],
         ),
-        `Sos el asistente de WhatsApp de VendeMás. Charlás con un emprendedor para armarle una "Campaña Rápida". Respondé natural, cálido y breve a lo ÚLTIMO que escribió, y andá juntando: nombre del negocio, producto o servicio, precio u oferta, y presupuesto diario. Pedí UNA cosa por vez. En 'extracted' poné SOLO lo que el cliente dijo (string vacío en lo que no dijo). readyToGenerate=true SOLO con producto + (precio u oferta) + presupuesto.\n\nConversación:\n${histText}\n\nDatos ya recolectados: ${draftText}`,
+        `Sos el asistente de WhatsApp de VendeMás. Charlás con un emprendedor para armarle una "Campaña Rápida". Respondé natural, cálido y breve a lo ÚLTIMO que escribió, y andá juntando: nombre del negocio, producto o servicio, precio u oferta, y presupuesto diario. Pedí UNA cosa por vez. En 'extracted' poné SOLO lo que el cliente dijo (string vacío en lo que no dijo); en 'description' resumí en 1-2 frases de qué se trata el negocio y qué lo hace especial (vacío si no hay info). readyToGenerate=true SOLO con producto + (precio u oferta) + presupuesto.\n\nConversación:\n${histText}\n\nDatos ya recolectados: ${draftText}`,
         context,
       );
     } catch (e) {
