@@ -291,3 +291,50 @@ async function firstOwnerId(businessProfileId: string): Promise<string | null> {
   });
   return b?.userId ?? null;
 }
+
+/**
+ * Guarda la imagen final (profesional) de un anuncio que sube el operador.
+ * Se persiste como data URL, así no depende de URLs que expiran (p. ej. Magnific).
+ * El creativo pasa a mostrarse tal cual (no la composición CSS) en la entrega.
+ */
+export async function attachCreativeImage(formData: FormData) {
+  const id = String(formData.get("visualCreativeId") || "");
+  const dataUrl = String(formData.get("dataUrl") || "");
+  if (!id || !dataUrl.startsWith("data:image/")) throw new Error("Falta una imagen válida.");
+  await setCreativeFinalImage(id, dataUrl, "upload");
+}
+
+/** Importa la imagen del anuncio desde una URL (ej. un render de Magnific) y la persiste,
+ *  para que no se pierda cuando la URL original caduque. */
+export async function importCreativeImageFromUrl(formData: FormData) {
+  const id = String(formData.get("visualCreativeId") || "");
+  const url = String(formData.get("url") || "").trim();
+  if (!id) throw new Error("Falta el creativo.");
+  if (!/^https?:\/\//i.test(url)) throw new Error("Pegá una URL válida (http/https).");
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`No pude bajar la imagen (HTTP ${res.status}).`);
+  const contentType = res.headers.get("content-type") || "image/jpeg";
+  if (!contentType.startsWith("image/")) throw new Error("La URL no apunta a una imagen.");
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const { url: storedUrl } = await storageService.uploadFile({ key: `creative-${id}`, contentType, data: bytes });
+  await setCreativeFinalImage(id, storedUrl, "magnific");
+}
+
+async function setCreativeFinalImage(id: string, url: string, provider: string) {
+  const vc = await prisma.visualCreative.findUnique({ where: { id }, select: { metadata: true } });
+  if (!vc) throw new Error("No existe el creativo.");
+  const meta = vc.metadata && typeof vc.metadata === "object" ? (vc.metadata as Record<string, unknown>) : {};
+  await prisma.visualCreative.update({
+    where: { id },
+    data: {
+      fileUrl: url,
+      provider,
+      status: "completed",
+      validationStatus: "valid",
+      isPlacementReady: true,
+      metadata: { ...meta, composed: false, finalImage: true },
+    },
+  });
+  revalidatePath(`/dashboard/visuals/${id}`);
+  revalidatePath("/dashboard/visuals");
+}

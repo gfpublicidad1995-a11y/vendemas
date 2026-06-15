@@ -2,9 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, PageHeader, SectionTitle } from "@/components/ui";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { validationStatusLabel, toneForStatus } from "@/lib/labels";
 import { creativeValidationService } from "@/services/meta-creative-specs/creativeValidationService";
-import { asStringArray } from "@/lib/json";
+import { asStringArray, asRecord } from "@/lib/json";
+import { CreativeImageUploader } from "@/components/visuals/CreativeImageUploader";
+import { importCreativeImageFromUrl } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +27,8 @@ export default async function VisualDetailPage({
   if (!visual) notFound();
 
   const report = await creativeValidationService.generateValidationReport(id);
+  const meta = asRecord(visual.metadata);
+  const isFinal = !!meta.finalImage;
 
   const fact = (label: string, value: React.ReactNode) => (
     <div className="flex justify-between border-b border-stone-100 py-2 text-sm">
@@ -43,8 +48,41 @@ export default async function VisualDetailPage({
             <img src={visual.fileUrl ?? ""} alt={visual.aspectRatio} className="w-full" />
           </Card>
           <p className="mt-2 text-center text-xs text-stone-400">
-            Vista previa (placeholder mock). Proveedor: {visual.provider}.
+            {isFinal
+              ? `Imagen final cargada ✅ · ${visual.provider}`
+              : `Vista previa (placeholder mock). Proveedor: ${visual.provider}.`}
           </p>
+
+          <Card className="mt-3 p-4">
+            <SectionTitle>Imagen final del anuncio</SectionTitle>
+            <p className="mb-3 mt-1 text-xs text-stone-500">
+              Subí el anuncio profesional (o importá el render). Reemplaza la vista previa y es lo que ve el cliente en
+              la entrega. Se guarda de forma permanente (no caduca).
+            </p>
+            <CreativeImageUploader visualCreativeId={visual.id} />
+
+            <div className="mt-3">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-stone-400">
+                o importar desde una URL
+              </p>
+              <form action={importCreativeImageFromUrl} className="flex gap-2">
+                <input type="hidden" name="visualCreativeId" value={visual.id} />
+                <input
+                  name="url"
+                  type="url"
+                  required
+                  placeholder="https://… (render de la imagen)"
+                  className="min-w-0 flex-1 rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                />
+                <SubmitButton
+                  className="shrink-0 rounded-xl bg-stone-800 px-3 py-2 text-sm font-medium text-white hover:bg-stone-900"
+                  pendingText="Importando…"
+                >
+                  Importar
+                </SubmitButton>
+              </form>
+            </div>
+          </Card>
         </div>
 
         <div className="space-y-6">
