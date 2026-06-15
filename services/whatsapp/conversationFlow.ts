@@ -67,7 +67,11 @@ async function record(session: SimSession, direction: "inbound" | "outbound", co
   });
 }
 
-export async function handleTurn(input: SimSession, text: string): Promise<TurnResult> {
+export async function handleTurn(
+  input: SimSession,
+  text: string,
+  photos?: { product?: string; logo?: string; founder?: string },
+): Promise<TurnResult> {
   const session: SimSession = { ...input, draft: { ...input.draft } };
   const replies: BotReply[] = [];
   const say = (text: string, extra?: Partial<BotReply>) => replies.push({ text, ...extra });
@@ -183,6 +187,7 @@ export async function handleTurn(input: SimSession, text: string): Promise<TurnR
       session.draft.qcOffer = t;
       session.phase = "qc_budget";
       say("¿Cuánto pensás invertir por día? (ej: USD 10/día)");
+      say("📸 Tip: subí la foto de tu producto, tu logo y una foto tuya en el panel de la derecha — así los anuncios salen CON tu producto y tu marca, no genéricos.");
       break;
     }
     case "qc_budget": {
@@ -225,6 +230,19 @@ export async function handleTurn(input: SimSession, text: string): Promise<TurnR
         session.businessName = business.businessName;
         session.ownBusiness = true;
         businessProfileId = business.id;
+      }
+
+      // Guardar las fotos que mandó la persona como assets del negocio, para que
+      // los anuncios se compongan con su producto, su logo y su foto real.
+      if (photos) {
+        const toSave = [
+          photos.product ? { type: "product_photo", url: photos.product } : null,
+          photos.logo ? { type: "logo", url: photos.logo } : null,
+          photos.founder ? { type: "founder_photo", url: photos.founder } : null,
+        ].filter((x): x is { type: string; url: string } => x !== null);
+        for (const a of toSave) {
+          await prisma.asset.create({ data: { businessProfileId, type: a.type, url: a.url } });
+        }
       }
 
       const order = await quickCampaignService.generateQuickCampaignOrder(businessProfileId, {

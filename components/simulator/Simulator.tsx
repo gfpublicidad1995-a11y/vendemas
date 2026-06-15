@@ -16,6 +16,64 @@ function makeSession(phone: string): SimSession {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Baja la resolución de la imagen y la pasa a data URL liviano (para no mandar MB).
+function downscale(file: File, maxDim = 1024): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("no ctx"));
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(img.src);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function PhotoRow({
+  label,
+  value,
+  onPick,
+}: {
+  label: string;
+  value?: string;
+  onPick: (file: File) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2">
+      {value ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt="" className="h-9 w-9 shrink-0 rounded object-cover ring-1 ring-stone-200" />
+      ) : (
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-stone-100 text-stone-300 ring-1 ring-stone-200">
+          📷
+        </span>
+      )}
+      <span className="flex-1 text-xs text-stone-600">{label}</span>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+        }}
+      />
+      <span className="rounded-lg bg-stone-100 px-2 py-1 text-[11px] font-medium text-stone-600">
+        {value ? "Cambiar" : "Subir"}
+      </span>
+    </label>
+  );
+}
+
 const QUICK_CHIPS = [
   "Hola",
   "Quiero vender más esta semana",
@@ -29,7 +87,17 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [photos, setPhotos] = useState<{ product?: string; logo?: string; founder?: string }>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  async function onPick(type: "product" | "logo" | "founder", file: File) {
+    try {
+      const url = await downscale(file);
+      setPhotos((p) => ({ ...p, [type]: url }));
+    } catch {
+      // ignorar
+    }
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -42,7 +110,11 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
     setMessages((m) => [...m, { from: "user", text: trimmed }]);
     setLoading(true);
     try {
-      const res = await simulateTurn(session, trimmed);
+      const res = await simulateTurn(
+        session,
+        trimmed,
+        session.phase === "qc_budget" ? photos : undefined,
+      );
       setSession(res.session);
       // Revelamos las respuestas de a una, con una pausa de "escribiendo…" entre
       // cada una, para que se sienta como una charla real de WhatsApp.
@@ -70,6 +142,7 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
     setPhone(newPhone);
     setSession(makeSession(newPhone));
     setMessages([]);
+    setPhotos({});
   }
 
   function newNumber() {
@@ -166,6 +239,18 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
       </div>
 
       <div className="space-y-3">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 text-sm shadow-sm">
+          <p className="font-medium text-stone-800">📸 Fotos para tus anuncios</p>
+          <p className="mt-1 text-xs text-stone-500">
+            Subí estas 3 y los anuncios salen con tu producto, tu logo y tu foto (no genéricos).
+          </p>
+          <div className="mt-3 space-y-2">
+            <PhotoRow label="Producto (fondo blanco)" value={photos.product} onPick={(f) => onPick("product", f)} />
+            <PhotoRow label="Logo" value={photos.logo} onPick={(f) => onPick("logo", f)} />
+            <PhotoRow label="Tu foto" value={photos.founder} onPick={(f) => onPick("founder", f)} />
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-stone-200 bg-white p-4 text-sm shadow-sm">
           <p className="font-medium text-stone-800">Probá los flujos</p>
           <ul className="mt-2 space-y-1 text-stone-500">

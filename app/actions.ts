@@ -18,8 +18,12 @@ import { handleTurn, type SimSession } from "@/services/whatsapp/conversationFlo
 import { storageService } from "@/services/storage";
 
 // --- Simulador ---------------------------------------------------------------
-export async function simulateTurn(session: SimSession, text: string) {
-  return handleTurn(session, text);
+export async function simulateTurn(
+  session: SimSession,
+  text: string,
+  photos?: { product?: string; logo?: string; founder?: string },
+) {
+  return handleTurn(session, text, photos);
 }
 
 // --- Contenido / pedidos -----------------------------------------------------
