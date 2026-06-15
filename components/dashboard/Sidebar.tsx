@@ -22,6 +22,7 @@ import {
   MessageCircle,
   Target,
   Activity,
+  TrendingUp,
   Menu,
   X,
 } from "lucide-react";
@@ -66,6 +67,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/dashboard/calendar", label: "Calendario", icon: CalendarDays },
       { href: "/dashboard/budget-planner", label: "Planificador de pauta", icon: Wallet },
+      { href: "/dashboard/forecast", label: "Simulador de resultados", icon: TrendingUp },
     ],
   },
   {
