@@ -1,105 +1,71 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import {
-  Badge,
-  Card,
-  PageHeader,
-  SectionTitle,
-  StatCard,
-} from "@/components/ui";
+import { Badge, Card, PageHeader, SectionTitle, StatCard, ActionCard } from "@/components/ui";
 import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
-import {
-  orderTypeLabel,
-  orderStatusLabel,
-  insightTypeLabel,
-  toneForStatus,
-} from "@/lib/labels";
+import { orderTypeLabel, orderStatusLabel, toneForStatus } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+const ACTIONS = [
+  { href: "/dashboard/simulator", icon: "📲", title: "Atender por WhatsApp", desc: "Charlá como un cliente y mirá cómo arma el contenido." },
+  { href: "/dashboard/businesses", icon: "🏪", title: "Mis negocios", desc: "Los datos y la marca de cada cliente." },
+  { href: "/dashboard/strategy", icon: "🧠", title: "Estrategia", desc: "El plan para vender de cada negocio." },
+  { href: "/dashboard/deliveries", icon: "📦", title: "Entregas", desc: "Lo que le mandás al cliente para aprobar." },
+  { href: "/dashboard/forecast", icon: "🔮", title: "Simular resultados", desc: "Qué esperar antes de gastar en anuncios." },
+  { href: "/dashboard/optimization", icon: "🩺", title: "Revisar resultados", desc: "Qué está fallando y cómo mejorarlo." },
+];
+
 export default async function DashboardHome() {
-  const [
-    businesses,
-    pendingOrders,
-    contentPieces,
-    draftCampaigns,
-    conversations,
-    insights,
-    digests,
-    opportunities,
-    quickCampaigns,
-    visuals,
-    validCreatives,
-    warningCreatives,
-    recentOrders,
-    recentInsights,
-    recentDigests,
-    recentAlerts,
-  ] = await Promise.all([
-    prisma.businessProfile.count(),
-    prisma.contentOrder.count({
-      where: { status: { in: ["draft", "collecting_info", "ready_to_generate", "generating"] } },
-    }),
-    prisma.contentPiece.count(),
-    prisma.campaignDraft.count({ where: { status: "draft" } }),
-    prisma.conversationThread.count(),
-    prisma.conversationInsight.count(),
-    prisma.dailyDigest.count(),
-    prisma.opportunityAlert.count(),
-    prisma.contentOrder.count({ where: { type: "quick_campaign" } }),
-    prisma.visualCreative.count(),
-    prisma.creativeVariant.count({ where: { validationStatus: "valid" } }),
-    prisma.creativeVariant.count({ where: { validationStatus: "warning" } }),
-    prisma.contentOrder.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { businessProfile: { select: { businessName: true } } },
-    }),
-    prisma.conversationInsight.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.dailyDigest.findMany({
-      take: 4,
-      orderBy: { date: "desc" },
-      include: { businessProfile: { select: { businessName: true } } },
-    }),
-    prisma.opportunityAlert.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const [businesses, contentPieces, conversations, deliveries, recentOrders, recentDigests] =
+    await Promise.all([
+      prisma.businessProfile.count(),
+      prisma.contentPiece.count(),
+      prisma.conversationThread.count(),
+      prisma.deliveryLink.count(),
+      prisma.contentOrder.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: { businessProfile: { select: { businessName: true } } },
+      }),
+      prisma.dailyDigest.findMany({
+        take: 5,
+        orderBy: { date: "desc" },
+        include: { businessProfile: { select: { businessName: true } } },
+      }),
+    ]);
 
   return (
     <div>
       <WelcomeCard />
       <PageHeader
-        title="Panel de VendeMás"
-        description="Vos atendé tu negocio. Acá vemos el contenido, los anuncios y las ideas para vender más."
+        title="Inicio"
+        description="Vos atendé tu negocio; nosotros armamos el contenido, los anuncios y las ideas para vender más. Elegí qué hacer 👇"
       />
 
-      <div className="vm-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard label="Negocios" value={businesses} href="/dashboard/businesses" tone="emerald" />
-        <StatCard label="Pedidos pendientes" value={pendingOrders} href="/dashboard/orders" tone="amber" />
-        <StatCard label="Piezas generadas" value={contentPieces} href="/dashboard/content" tone="green" />
-        <StatCard label="Campañas en borrador" value={draftCampaigns} href="/dashboard/campaigns" tone="amber" />
-        <StatCard label="Conversaciones" value={conversations} href="/dashboard/conversations" tone="blue" />
-        <StatCard label="Insights detectados" value={insights} href="/dashboard/insights" tone="purple" />
-        <StatCard label="Reportes diarios" value={digests} href="/dashboard/digests" tone="green" />
-        <StatCard label="Oportunidades" value={opportunities} href="/dashboard/opportunities" tone="amber" />
-        <StatCard label="Campañas rápidas" value={quickCampaigns} href="/dashboard/orders" tone="emerald" />
-        <StatCard label="Visuales generados" value={visuals} href="/dashboard/visuals" tone="green" />
-        <StatCard label="Creativos validados" value={validCreatives} href="/dashboard/visuals" tone="green" />
-        <StatCard label="Creativos con avisos" value={warningCreatives} href="/dashboard/visuals" tone="amber" />
+      {/* Acciones principales — qué se puede hacer, en lenguaje simple */}
+      <div className="vm-stagger grid grid-cols-2 gap-3 lg:grid-cols-3">
+        {ACTIONS.map((a) => (
+          <ActionCard key={a.href} {...a} />
+        ))}
       </div>
 
+      {/* Un vistazo — pocos números, claros */}
+      <SectionTitle>Un vistazo</SectionTitle>
+      <div className="vm-stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard label="Negocios" value={businesses} href="/dashboard/businesses" tone="emerald" />
+        <StatCard label="Contenido creado" value={contentPieces} href="/dashboard/content" tone="green" />
+        <StatCard label="Charlas con clientes" value={conversations} href="/dashboard/conversations" tone="blue" />
+        <StatCard label="Entregas" value={deliveries} href="/dashboard/deliveries" tone="green" />
+      </div>
+
+      {/* Actividad reciente */}
       <div className="vm-stagger mt-8 grid gap-6 lg:grid-cols-2">
         <section>
           <SectionTitle
             action={
               <Link href="/dashboard/orders" className="text-xs font-medium text-emerald-700 hover:underline">
-                Ver todos
+                Ver todo
               </Link>
             }
           >
@@ -107,7 +73,7 @@ export default async function DashboardHome() {
           </SectionTitle>
           <Card className="divide-y divide-stone-100">
             {recentOrders.length === 0 ? (
-              <p className="p-4 text-sm text-stone-400">Todavía no hay pedidos.</p>
+              <p className="p-4 text-sm text-stone-400">Todavía no hay pedidos. Probá el simulador para crear el primero.</p>
             ) : (
               recentOrders.map((o) => (
                 <Link
@@ -116,9 +82,7 @@ export default async function DashboardHome() {
                   className="flex items-center justify-between gap-3 p-4 hover:bg-stone-50"
                 >
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-stone-800">
-                      {orderTypeLabel(o.type)}
-                    </div>
+                    <div className="truncate text-sm font-medium text-stone-800">{orderTypeLabel(o.type)}</div>
                     <div className="truncate text-xs text-stone-400">
                       {o.businessProfile.businessName} · {formatDate(o.createdAt)}
                     </div>
@@ -133,47 +97,16 @@ export default async function DashboardHome() {
         <section>
           <SectionTitle
             action={
-              <Link href="/dashboard/insights" className="text-xs font-medium text-emerald-700 hover:underline">
-                Ver todos
-              </Link>
-            }
-          >
-            Últimos insights
-          </SectionTitle>
-          <Card className="divide-y divide-stone-100">
-            {recentInsights.length === 0 ? (
-              <p className="p-4 text-sm text-stone-400">Sin insights todavía.</p>
-            ) : (
-              recentInsights.map((i) => (
-                <Link
-                  key={i.id}
-                  href={`/dashboard/insights/${i.id}`}
-                  className="flex items-center justify-between gap-3 p-4 hover:bg-stone-50"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-stone-800">{i.title}</div>
-                    <div className="text-xs text-stone-400">{insightTypeLabel(i.type)} · {i.frequency}×</div>
-                  </div>
-                  <Badge tone="purple">{insightTypeLabel(i.type)}</Badge>
-                </Link>
-              ))
-            )}
-          </Card>
-        </section>
-
-        <section>
-          <SectionTitle
-            action={
               <Link href="/dashboard/digests" className="text-xs font-medium text-emerald-700 hover:underline">
-                Ver todos
+                Ver todo
               </Link>
             }
           >
-            Últimos reportes diarios
+            Ideas para mañana
           </SectionTitle>
           <Card className="divide-y divide-stone-100">
             {recentDigests.length === 0 ? (
-              <p className="p-4 text-sm text-stone-400">Sin reportes todavía.</p>
+              <p className="p-4 text-sm text-stone-400">Sin ideas todavía. Aparecen cuando hay charlas con clientes.</p>
             ) : (
               recentDigests.map((d) => (
                 <Link
@@ -183,41 +116,14 @@ export default async function DashboardHome() {
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-stone-800">
-                      Ideas para mañana · {formatDate(d.date)}
+                      Ideas del {formatDate(d.date)}
                     </div>
-                    <div className="text-xs text-stone-400">
+                    <div className="truncate text-xs text-stone-400">
                       {d.businessProfile.businessName} · {d.totalConversations} charlas
                     </div>
                   </div>
-                  <Badge tone={toneForStatus(d.status)}>{d.status}</Badge>
+                  <span className="shrink-0 text-stone-300">→</span>
                 </Link>
-              ))
-            )}
-          </Card>
-        </section>
-
-        <section>
-          <SectionTitle
-            action={
-              <Link href="/dashboard/opportunities" className="text-xs font-medium text-emerald-700 hover:underline">
-                Ver todas
-              </Link>
-            }
-          >
-            Últimas oportunidades
-          </SectionTitle>
-          <Card className="divide-y divide-stone-100">
-            {recentAlerts.length === 0 ? (
-              <p className="p-4 text-sm text-stone-400">Sin oportunidades todavía.</p>
-            ) : (
-              recentAlerts.map((a) => (
-                <div key={a.id} className="flex items-center justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-stone-800">{a.title}</div>
-                    <div className="truncate text-xs text-stone-400">{a.description}</div>
-                  </div>
-                  <Badge tone={a.priority === "critical" ? "red" : "amber"}>{a.priority}</Badge>
-                </div>
               ))
             )}
           </Card>

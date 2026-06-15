@@ -120,6 +120,30 @@ export function StatCard({
   );
 }
 
+export function ActionCard({
+  href,
+  icon,
+  title,
+  desc,
+}: {
+  href: string;
+  icon: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <Link href={href} className="group block h-full">
+      <Card className="h-full p-4 transition hover:border-emerald-200 hover:shadow-md">
+        <div className="text-2xl">{icon}</div>
+        <div className="mt-2 text-sm font-semibold text-stone-800 group-hover:text-emerald-700">
+          {title}
+        </div>
+        <p className="mt-0.5 text-xs leading-snug text-stone-500">{desc}</p>
+      </Card>
+    </Link>
+  );
+}
+
 export function EmptyState({
   title,
   description,
