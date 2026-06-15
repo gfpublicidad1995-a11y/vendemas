@@ -21,6 +21,7 @@ import {
   Wallet,
   MessageCircle,
   Target,
+  Activity,
   Menu,
   X,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const NAV: NavGroup[] = [
       { href: "/dashboard/opportunities", label: "Oportunidades", icon: Radar },
       { href: "/dashboard/digests", label: "Ideas para mañana", icon: Sunrise },
       { href: "/dashboard/reports/weekly", label: "Reporte semanal", icon: BarChart3 },
+      { href: "/dashboard/optimization", label: "Resultados y optimización", icon: Activity },
     ],
   },
   {
