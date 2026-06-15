@@ -18,9 +18,9 @@ const TEXT: Record<Light, string> = {
 };
 
 const RESULT_LABEL: Record<ResultType, string> = {
-  conversaciones: "Conversaciones (WhatsApp)",
-  leads: "Leads / formularios",
-  compras: "Compras (tienda)",
+  conversaciones: "Mensajes por WhatsApp",
+  leads: "Consultas / contactos",
+  compras: "Ventas",
 };
 
 const inputCls =
@@ -88,7 +88,7 @@ export default function ForecastPage() {
         <Card className="h-fit p-5">
           <SectionTitle>Tu campaña</SectionTitle>
           <form onSubmit={run} className="mt-2 space-y-3">
-            <Field label="Objetivo / tipo de resultado">
+            <Field label="¿Qué querés conseguir?">
               <select value={resultType} onChange={(e) => setResultType(e.target.value as ResultType)} className={inputCls}>
                 {(Object.keys(RESULT_LABEL) as ResultType[]).map((k) => (
                   <option key={k} value={k}>
@@ -98,30 +98,43 @@ export default function ForecastPage() {
               </select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
+              <Field label="Tu presupuesto" hint="lo que pensás invertir">
+                <input type="number" inputMode="decimal" min={0} value={f.budget} onChange={set("budget")} className={inputCls} />
+              </Field>
               <Field label="Moneda">
                 <input value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls} />
               </Field>
-              <Field label="Presupuesto" hint="total del período">
-                <input type="number" inputMode="decimal" min={0} value={f.budget} onChange={set("budget")} className={inputCls} />
-              </Field>
-              <Field label="CPM esperado" hint="costo x 1.000 impr.">
-                <input type="number" inputMode="decimal" min={0} value={f.cpm} onChange={set("cpm")} className={inputCls} />
-              </Field>
-              <Field label="CTR esperado (%)" hint="clics / impresiones">
-                <input type="number" inputMode="decimal" min={0} value={f.ctr} onChange={set("ctr")} className={inputCls} />
-              </Field>
-              <Field label="Conversión (%)" hint="clic → resultado">
-                <input type="number" inputMode="decimal" min={0} value={f.conversionRate} onChange={set("conversionRate")} className={inputCls} />
-              </Field>
               {resultType === "compras" ? (
-                <Field label="Ticket promedio" hint="para ingresos / ROAS">
+                <Field label="Precio de venta" hint="cuánto sale lo que vendés">
                   <input type="number" inputMode="decimal" min={0} value={f.ticket} onChange={set("ticket")} className={inputCls} placeholder="opcional" />
                 </Field>
               ) : null}
-              <Field label="Costo objetivo" hint="tu 'número mágico'">
-                <input type="number" inputMode="decimal" min={0} value={f.targetCostPerResult} onChange={set("targetCostPerResult")} className={inputCls} placeholder="opcional" />
-              </Field>
             </div>
+
+            <details className="rounded-xl border border-stone-200 bg-stone-50/50 px-3 py-2">
+              <summary className="cursor-pointer select-none text-sm font-medium text-stone-600">
+                ⚙️ Ajustes avanzados (opcional)
+              </summary>
+              <p className="mt-2 text-[11px] text-stone-400">
+                ¿No sabés estos números? Dejá los que vienen: son valores típicos. Si tenés datos de campañas anteriores,
+                ajustalos para afinar la estimación.
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                <Field label="CPM esperado" hint="costo cada 1.000 vistas">
+                  <input type="number" inputMode="decimal" min={0} value={f.cpm} onChange={set("cpm")} className={inputCls} />
+                </Field>
+                <Field label="CTR esperado (%)" hint="% que toca el anuncio">
+                  <input type="number" inputMode="decimal" min={0} value={f.ctr} onChange={set("ctr")} className={inputCls} />
+                </Field>
+                <Field label="Conversión (%)" hint="% que termina escribiendo/comprando">
+                  <input type="number" inputMode="decimal" min={0} value={f.conversionRate} onChange={set("conversionRate")} className={inputCls} />
+                </Field>
+                <Field label="Costo objetivo" hint="cuánto querés pagar por cada uno">
+                  <input type="number" inputMode="decimal" min={0} value={f.targetCostPerResult} onChange={set("targetCostPerResult")} className={inputCls} placeholder="opcional" />
+                </Field>
+              </div>
+            </details>
+
             <button type="submit" className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">
               🔮 Simular
             </button>

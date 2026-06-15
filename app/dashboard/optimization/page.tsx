@@ -24,9 +24,15 @@ const TEXT: Record<Light, string> = {
 };
 
 const RESULT_LABEL: Record<ResultType, string> = {
-  conversaciones: "Conversaciones (WhatsApp)",
-  leads: "Leads / formularios",
-  compras: "Compras (tienda)",
+  conversaciones: "Mensajes por WhatsApp",
+  leads: "Consultas / contactos",
+  compras: "Ventas",
+};
+
+const RESULT_COUNT_LABEL: Record<ResultType, string> = {
+  conversaciones: "¿Cuántos te escribieron?",
+  leads: "¿Cuántas consultas llegaron?",
+  compras: "¿Cuántas ventas hubo?",
 };
 
 function Field({
@@ -100,7 +106,7 @@ export default function OptimizationPage() {
         <Card className="h-fit p-5">
           <SectionTitle>Datos de la campaña</SectionTitle>
           <form onSubmit={diagnose} className="mt-2 space-y-3">
-            <Field label="Objetivo / tipo de resultado">
+            <Field label="¿Qué buscabas con la campaña?">
               <select
                 value={resultType}
                 onChange={(e) => setResultType(e.target.value as ResultType)}
@@ -114,31 +120,35 @@ export default function OptimizationPage() {
               </select>
             </Field>
 
+            <p className="rounded-lg bg-stone-50 px-3 py-2 text-[11px] text-stone-500 ring-1 ring-stone-100">
+              💡 Estos números los copiás del Administrador de Anuncios de Meta (Ads Manager).
+            </p>
+
             <div className="grid grid-cols-2 gap-3">
+              <Field label="¿Cuánto gastaste?">
+                <input type="number" inputMode="decimal" min={0} value={f.spend} onChange={set("spend")} className={inputCls} placeholder="0" />
+              </Field>
               <Field label="Moneda">
                 <input value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls} />
               </Field>
-              <Field label="Inversión (gasto)">
-                <input type="number" inputMode="decimal" min={0} value={f.spend} onChange={set("spend")} className={inputCls} placeholder="0" />
-              </Field>
-              <Field label="Impresiones">
+              <Field label="Veces que se mostró" hint="impresiones">
                 <input type="number" min={0} value={f.impressions} onChange={set("impressions")} className={inputCls} placeholder="0" />
               </Field>
-              <Field label="Alcance" hint="personas únicas (opcional)">
+              <Field label="Gente distinta que llegó" hint="alcance · opcional">
                 <input type="number" min={0} value={f.reach} onChange={set("reach")} className={inputCls} placeholder="opcional" />
               </Field>
-              <Field label="Clics en el enlace">
+              <Field label="¿Cuántos hicieron clic?">
                 <input type="number" min={0} value={f.linkClicks} onChange={set("linkClicks")} className={inputCls} placeholder="0" />
               </Field>
-              <Field label={resultType === "compras" ? "Compras" : resultType === "leads" ? "Leads" : "Conversaciones"}>
+              <Field label={RESULT_COUNT_LABEL[resultType]}>
                 <input type="number" min={0} value={f.results} onChange={set("results")} className={inputCls} placeholder="0" />
               </Field>
               {resultType === "compras" ? (
-                <Field label="Ingresos generados" hint="para el ROAS">
+                <Field label="¿Cuánto vendiste en total?" hint="para el retorno (ROAS)">
                   <input type="number" min={0} value={f.revenue} onChange={set("revenue")} className={inputCls} placeholder="opcional" />
                 </Field>
               ) : null}
-              <Field label="Costo objetivo" hint="tu 'número mágico' por resultado">
+              <Field label="¿Cuánto querés pagar por cada uno?" hint="opcional">
                 <input type="number" min={0} value={f.targetCostPerResult} onChange={set("targetCostPerResult")} className={inputCls} placeholder="opcional" />
               </Field>
             </div>
