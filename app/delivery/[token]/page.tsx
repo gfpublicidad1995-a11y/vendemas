@@ -25,6 +25,8 @@ const BUCKETS: { ratios: string[]; title: string; note?: string }[] = [
   { ratios: ["1.91:1"], title: "Landscape 1.91:1 — Columna derecha / anuncio de enlace" },
 ];
 
+const VIDEO_TYPES = ["video", "ugc_video", "avatar_video"];
+
 export default async function DeliveryPage({
   params,
 }: {
@@ -149,8 +151,26 @@ export default async function DeliveryPage({
           </>
         ) : null}
 
+        {/* Videos */}
+        {order.visualCreatives.some((v) => VIDEO_TYPES.includes(v.type)) ? (
+          <>
+            <SectionTitle>Videos</SectionTitle>
+            <div className="mb-6 grid gap-3 sm:grid-cols-2">
+              {order.visualCreatives
+                .filter((v) => VIDEO_TYPES.includes(v.type))
+                .map((v) => (
+                  <Card key={v.id} className="overflow-hidden">
+                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                    <video src={v.fileUrl ?? ""} controls playsInline className="w-full bg-black" />
+                    <div className="p-2 text-xs text-stone-400">{v.placement ?? v.aspectRatio}</div>
+                  </Card>
+                ))}
+            </div>
+          </>
+        ) : null}
+
         {/* Visuales por ubicación */}
-        {order.visualCreatives.length > 0 ? (
+        {order.visualCreatives.some((v) => !VIDEO_TYPES.includes(v.type)) ? (
           <>
             <SectionTitle>Piezas visuales por ubicación</SectionTitle>
             <div className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-amber-200">
@@ -159,7 +179,9 @@ export default async function DeliveryPage({
             </div>
             <div className="mb-6 space-y-5">
               {BUCKETS.map((bucket) => {
-                const items = order.visualCreatives.filter((v) => bucket.ratios.includes(v.aspectRatio));
+                const items = order.visualCreatives.filter(
+                  (v) => bucket.ratios.includes(v.aspectRatio) && !VIDEO_TYPES.includes(v.type),
+                );
                 if (items.length === 0) return null;
                 return (
                   <div key={bucket.title}>
