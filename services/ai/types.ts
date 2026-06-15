@@ -97,6 +97,73 @@ export interface ChatReplyResult {
   readyToGenerate: boolean;
 }
 
+/** Señales del negocio (rubro, conversaciones, playbook) que alimentan la estrategia. */
+export interface StrategyBrainSignals {
+  zona: string;
+  precio: number | null;
+  /** Objeciones reales detectadas (con su respuesta sugerida si existe). */
+  objeciones: StrategyObjection[];
+  topPreguntas: string[];
+  topIntereses: string[];
+  ofertasSugeridas: string[];
+  angulosContenido: string[];
+  /** Deseos de Reiss sugeridos por rubro (pista de arranque). */
+  deseosSugeridos: string[];
+  /** Los 16 deseos de Reiss, para que la IA elija los más afines. */
+  reissOpciones: string[];
+  /** Los 5 niveles de consciencia (key, label, foco). */
+  niveles: { key: string; label: string; focus: string }[];
+}
+
+export interface StrategyObjection {
+  objecion: string;
+  respuesta: string;
+}
+export interface StrategyCompetitor {
+  nombre: string;
+  angulo: string;
+  oferta: string;
+  comoSuperarlo: string;
+}
+export interface StrategyAwarenessCopy {
+  /** key del nivel de consciencia: unaware | problem | solution | product | most_aware */
+  key: string;
+  angulo: string;
+  copy: string;
+}
+export interface StrategyCreativeHook {
+  deseo: string;
+  /** key del nivel de consciencia */
+  nivel: string;
+  /** "reel" | "imagen" */
+  formato: string;
+  hook: string;
+}
+export interface StrategyScript {
+  nombre: string;
+  estructura: string[];
+}
+
+/** Contenido estratégico específico del negocio (lo que deja de ser "verde"). */
+export interface StrategyBrain {
+  propuestaValor: string;
+  avatarPerfil: string;
+  deseosReiss: string[];
+  dolores: string[];
+  deseos: string[];
+  problema: string;
+  solucion: string;
+  diferenciales: string[];
+  ofertaGancho: string;
+  objeciones: StrategyObjection[];
+  testimonios: string[];
+  garantia: string;
+  competidores: StrategyCompetitor[];
+  awarenessCopies: StrategyAwarenessCopy[];
+  creativeHooks: StrategyCreativeHook[];
+  scriptGuide: StrategyScript[];
+}
+
 export interface AIContentService {
   generateAdCopies(ctx: BusinessContext, brief: ContentBrief): Promise<AdsPackResult>;
   generateAngledAds(ctx: BusinessContext, brief: ContentBrief, hooks?: string[]): Promise<AngledAd[]>;
@@ -120,4 +187,6 @@ export interface AIContentService {
     history: ChatTurn[],
     draft: Record<string, string>
   ): Promise<ChatReplyResult>;
+  /** Cerebro estratégico: genera el contenido específico del negocio (ADN, avatar, 7 maletas, hooks, guiones, competidores). */
+  generateStrategyBrain(ctx: BusinessContext, signals: StrategyBrainSignals): Promise<StrategyBrain>;
 }

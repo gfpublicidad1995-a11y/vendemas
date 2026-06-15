@@ -11,6 +11,8 @@ import type {
   ContentBrief,
   DigestIdeas,
   QuickCampaignResult,
+  StrategyBrain,
+  StrategyBrainSignals,
   VideoScriptResult,
 } from "./types";
 
@@ -18,6 +20,9 @@ import type {
 const MODEL = process.env.AI_MODEL || "gemini-2.5-flash";
 const ENDPOINT = (model: string, key: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+const RETRY_WAITS = [1500, 4000, 9000];
 
 const SYSTEM = `Sos el mejor redactor publicitario de una agencia de marketing por WhatsApp para PyMEs de Latinoamérica (Uruguay / Río de la Plata). Escribís copy que VENDE, en español rioplatense natural (de "vos", no "tú"), cálido, claro y directo, sin sonar a robot ni a "IA".
 
@@ -59,13 +64,15 @@ export class GeminiAIContentService implements AIContentService {
       .join("\n");
   }
 
-  private async call(prompt: string, schema?: GSchema): Promise<string> {
+  private async call(prompt: string, schema?: GSchema, maxTokens = 6000, attempt = 0): Promise<string> {
     const body: Record<string, unknown> = {
       systemInstruction: { parts: [{ text: SYSTEM }] },
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.85,
-        maxOutputTokens: 6000,
+        // gemini-2.5-flash "piensa" y esos tokens cuentan acá; dejamos margen
+        // para que el JSON no se trunque (sobre todo en esquemas grandes).
+        maxOutputTokens: maxTokens,
         ...(schema ? { responseMimeType: "application/json", responseSchema: schema } : {}),
       },
     };
@@ -74,6 +81,11 @@ export class GeminiAIContentService implements AIContentService {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
+    // Reintentos con backoff ante límite de tasa (429) o saturación (503).
+    if ((res.status === 429 || res.status === 503) && attempt < RETRY_WAITS.length) {
+      await sleep(RETRY_WAITS[attempt]);
+      return this.call(prompt, schema, maxTokens, attempt + 1);
+    }
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const data = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
@@ -83,8 +95,8 @@ export class GeminiAIContentService implements AIContentService {
     return text;
   }
 
-  private async json<T>(schema: GSchema, instruction: string, context: string): Promise<T> {
-    const text = await this.call(`Contexto del negocio:\n${context}\n\nTarea:\n${instruction}`, schema);
+  private async json<T>(schema: GSchema, instruction: string, context: string, maxTokens = 6000): Promise<T> {
+    const text = await this.call(`Contexto del negocio:\n${context}\n\nTarea:\n${instruction}`, schema, maxTokens);
     return JSON.parse(text) as T;
   }
 
@@ -314,6 +326,77 @@ export class GeminiAIContentService implements AIContentService {
     } catch (e) {
       console.error("[AI/gemini] chatReply →", e);
       return this.fallback.chatReply(ctx, history, draft);
+    }
+  }
+
+  async generateStrategyBrain(ctx: BusinessContext, s: StrategyBrainSignals): Promise<StrategyBrain> {
+    try {
+      const NIVELES = ["unaware", "problem", "solution", "product", "most_aware"];
+      const objItem = gobj({ objecion: GSTR, respuesta: GSTR }, ["objecion", "respuesta"]);
+      const schema = gobj(
+        {
+          propuestaValor: GSTR,
+          avatarPerfil: GSTR,
+          deseosReiss: GSTRARR,
+          dolores: GSTRARR,
+          deseos: GSTRARR,
+          problema: GSTR,
+          solucion: GSTR,
+          diferenciales: GSTRARR,
+          ofertaGancho: GSTR,
+          objeciones: { type: "ARRAY", items: objItem },
+          testimonios: GSTRARR,
+          garantia: GSTR,
+          competidores: {
+            type: "ARRAY",
+            items: gobj({ nombre: GSTR, angulo: GSTR, oferta: GSTR, comoSuperarlo: GSTR }, ["nombre", "angulo", "oferta", "comoSuperarlo"]),
+          },
+          awarenessCopies: {
+            type: "ARRAY",
+            items: gobj({ key: { type: "STRING", enum: NIVELES }, angulo: GSTR, copy: GSTR }, ["key", "angulo", "copy"]),
+          },
+          creativeHooks: {
+            type: "ARRAY",
+            items: gobj(
+              { deseo: GSTR, nivel: { type: "STRING", enum: NIVELES }, formato: { type: "STRING", enum: ["reel", "imagen"] }, hook: GSTR },
+              ["deseo", "nivel", "formato", "hook"],
+            ),
+          },
+          scriptGuide: { type: "ARRAY", items: gobj({ nombre: GSTR, estructura: GSTRARR }, ["nombre", "estructura"]) },
+        },
+        ["propuestaValor", "avatarPerfil", "deseosReiss", "dolores", "deseos", "problema", "solucion", "diferenciales", "ofertaGancho", "objeciones", "testimonios", "garantia", "competidores", "awarenessCopies", "creativeHooks", "scriptGuide"],
+      );
+      const signalLines = [
+        `Zona: ${s.zona}`,
+        s.precio != null ? `Precio/ticket aprox: ${s.precio}` : null,
+        s.objeciones.length ? `Objeciones reales detectadas: ${s.objeciones.map((o) => o.objecion).join("; ")}` : null,
+        s.topPreguntas.length ? `Lo que más preguntan: ${s.topPreguntas.join("; ")}` : null,
+        s.topIntereses.length ? `Productos/temas de interés: ${s.topIntereses.join("; ")}` : null,
+        s.ofertasSugeridas.length ? `Ofertas típicas del rubro: ${s.ofertasSugeridas.join("; ")}` : null,
+        s.angulosContenido.length ? `Ángulos de contenido del rubro: ${s.angulosContenido.join("; ")}` : null,
+        `Deseos de Reiss sugeridos para el rubro: ${s.deseosSugeridos.join(", ")}`,
+        `Los 16 deseos de Reiss (elegí los 3-4 más afines): ${s.reissOpciones.join(", ")}`,
+        `Niveles de consciencia (usá estas keys exactas): ${s.niveles.map((n) => `${n.key} (${n.label}: ${n.focus})`).join(" | ")}`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      return await this.json<StrategyBrain>(
+        schema,
+        `Sos estratega de marketing. Armá la ESTRATEGIA del negocio, súper específica (nada genérico ni "verde"), usando estos frameworks:
+- ADN + 'propuestaValor' (posicionamiento en 1 frase potente).
+- Avatar: 'avatarPerfil' (2-3 frases vívidas del cliente ideal), 'deseosReiss' (3-4 de la lista de los 16), 'dolores' (3-4 reales) y 'deseos' (3-4 aspiraciones).
+- 7 maletas: 'problema' (el dolor central), 'solucion' (cómo lo resuelve este negocio), 'diferenciales' (3-4), 'objeciones' (3, cada una con 'objecion' y 'respuesta' que la derribe), 'testimonios' (2-3 ideas concretas de testimonios a pedir) y 'garantia' (una reversión de riesgo creíble). 'ofertaGancho' = la oferta irresistible.
+- 'competidores' (2-3 típicos del rubro en la zona) con 'nombre', 'angulo', 'oferta' y 'comoSuperarlo' (la ventaja concreta de este negocio).
+- 'awarenessCopies': UNA entrada por cada nivel de consciencia (las 5 keys), con 'angulo' y un 'copy' de ejemplo para ese nivel.
+- 'creativeHooks': 6-8 hooks combinando deseo × nivel (key) × formato ("reel"/"imagen").
+- 'scriptGuide': 3 guiones de reel con 'nombre' y 'estructura' (4-6 pasos).
+Todo en español rioplatense, concreto al negocio y su oferta. Respetá el tono y NUNCA uses palabras prohibidas.`,
+        `${this.ctxLines(ctx)}\n\nSeñales del negocio:\n${signalLines}`,
+        16000, // esquema grande + tokens de "thinking": margen para no truncar el JSON
+      );
+    } catch (e) {
+      console.error("[AI/gemini] generateStrategyBrain →", e);
+      return this.fallback.generateStrategyBrain(ctx, s);
     }
   }
 }

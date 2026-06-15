@@ -101,6 +101,7 @@ function StrategyView({ strategy }: { strategy: NonNullable<Awaited<ReturnType<t
         <Card className="p-5">
           <SectionTitle>Avatar (16 deseos de Reiss)</SectionTitle>
           <p className="text-sm text-stone-700">{s(avatar.publico)} · {s(avatar.zona)}</p>
+          {avatar.perfil ? <p className="mt-1 text-sm italic text-stone-500">{s(avatar.perfil)}</p> : null}
           <div className="mt-2 flex flex-wrap gap-1">
             {asStringArray(avatar.deseosReiss).map((d) => (
               <Badge key={d} tone="purple">{d}</Badge>

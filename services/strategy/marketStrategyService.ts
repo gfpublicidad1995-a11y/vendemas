@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { asStringArray } from "@/lib/json";
 import { industryPlaybookService } from "@/services/industry/industryPlaybookService";
 import { conversationIntelligenceService } from "@/services/conversations/conversationIntelligenceService";
+import { aiService } from "@/services/ai";
+import type { BusinessContext, StrategyBrainSignals } from "@/services/ai";
 
 /**
  * MarketStrategyService — inteligencia de marketing nativa de VendeMás,
@@ -81,8 +83,34 @@ export class MarketStrategyService {
     ]);
 
     const zona = business.city ? `${business.city}${business.country ? `, ${business.country}` : ""}` : "tu zona";
-    const desires = desiresForCategory(business.category);
     const price = parsePrice(business.mainOffer);
+
+    // --- Cerebro estratégico generado por IA (con fallback heurístico) ---
+    const ctx: BusinessContext = {
+      businessName: business.businessName,
+      category: business.category,
+      city: business.city,
+      toneOfVoice: business.toneOfVoice ?? business.brandKit?.toneOfVoice ?? null,
+      mainOffer: business.mainOffer,
+      targetAudience: business.targetAudience,
+      description: business.description,
+    };
+    const signals: StrategyBrainSignals = {
+      zona,
+      precio: price,
+      objeciones: objections.map((o) => ({
+        objecion: o.objection,
+        respuesta: o.suggestedResponse ?? "Destacá el valor real y bajá el riesgo percibido.",
+      })),
+      topPreguntas: summary.topQuestions,
+      topIntereses: summary.topProductInterests,
+      ofertasSugeridas: offers,
+      angulosContenido: angles,
+      deseosSugeridos: desiresForCategory(business.category),
+      reissOpciones: [...REISS_16],
+      niveles: AWARENESS_LEVELS.map((l) => ({ key: l.key, label: l.label, focus: l.focus })),
+    };
+    const brain = await aiService.generateStrategyBrain(ctx, signals);
 
     // --- ADN de marca ---
     const brandDna = {
@@ -91,9 +119,7 @@ export class MarketStrategyService {
       tono: business.toneOfVoice ?? business.brandKit?.toneOfVoice ?? "Cercano, simple y vendedor",
       estiloVisual: business.brandKit?.visualStyle ?? "Limpio y comercial",
       colores: [business.brandKit?.primaryColor, business.brandKit?.secondaryColor].filter(Boolean),
-      propuestaValor: business.mainOffer
-        ? `${business.businessName} resuelve la necesidad de ${business.targetAudience ?? "su público"} con ${business.mainOffer}.`
-        : `${business.businessName} para ${business.targetAudience ?? "su público"}.`,
+      propuestaValor: brain.propuestaValor,
       producto: business.mainOffer,
       precio: price,
     };
@@ -102,85 +128,53 @@ export class MarketStrategyService {
     const avatar = {
       publico: business.targetAudience ?? "Público objetivo del rubro",
       zona,
-      deseosReiss: desires,
-      dolores: objections.map((o) => o.objection),
-      deseos: summary.topProductInterests.length ? summary.topProductInterests : angles.slice(0, 2),
+      perfil: brain.avatarPerfil,
+      deseosReiss: brain.deseosReiss,
+      dolores: brain.dolores,
+      deseos: brain.deseos,
     };
 
     // --- Oferta ---
     const offer = {
       queOfrece: business.mainOffer ?? "Producto/servicio principal",
-      diferenciales: ["Atención cercana y rápida", "Asesoramiento honesto", ...offers].slice(0, 4),
-      ofertaGancho: offers[0] ?? "Beneficio por tiempo limitado",
+      diferenciales: brain.diferenciales,
+      ofertaGancho: brain.ofertaGancho,
     };
 
-    // --- Competidores (típicos del rubro en la zona) ---
-    const competitors = [
-      {
-        nombre: `Competencia típica del rubro en ${zona}`,
-        angulo: angles[0] ?? "Producto + precio",
-        oferta: offers[0] ?? "Descuentos puntuales",
-        hooks: ["Precio bajo", "Promo del día"],
-        nota: "Reemplazar con competidores reales (la herramienta de espionaje real se conecta luego).",
-      },
-      {
-        nombre: "Tiendas grandes / cadenas",
-        angulo: "Variedad y precio",
-        oferta: "Envío y catálogo amplio",
-        hooks: ["Todo en un lugar", "Marcas conocidas"],
-        nota: "Tu ventaja: cercanía, asesoramiento y trato personal.",
-      },
-    ];
+    // --- Competidores (típicos del rubro; nota = cómo superarlos) ---
+    const competitors = brain.competidores.map((c) => ({
+      nombre: c.nombre,
+      angulo: c.angulo,
+      oferta: c.oferta,
+      nota: c.comoSuperarlo,
+    }));
 
     // --- 7 maletas de cualquier compra ---
     const sevenSuitcases = {
       publico: business.targetAudience ?? "Definir público concreto",
-      problema: objections[0]?.objection
-        ? `Lo que frena: "${objections[0].objection}"`
-        : "El cliente no encuentra una opción confiable y cercana.",
-      solucion: business.mainOffer ?? "Tu producto/servicio principal",
-      diferenciales: offer.diferenciales,
-      objeciones: objections.length
-        ? objections.map((o) => ({ objecion: o.objection, respuesta: o.suggestedResponse }))
-        : [{ objecion: "Me parece caro", respuesta: "Destacar valor y costo por uso; sumar un beneficio." }],
-      testimonios: ["Pedir 2-3 testimonios reales de clientes (texto o captura de WhatsApp)."],
-      garantia: "Ofrecer una garantía simple (satisfacción / cambio) para bajar el riesgo percibido.",
+      problema: brain.problema,
+      solucion: brain.solucion,
+      diferenciales: brain.diferenciales,
+      objeciones: brain.objeciones,
+      testimonios: brain.testimonios,
+      garantia: brain.garantia,
     };
 
-    // --- Nivel de consciencia dominante ---
+    // --- Nivel de consciencia dominante (según señales de conversaciones) ---
     let dominantAwarenessLevel = "problem";
     if (summary.purchaseIntentCount > 0) dominantAwarenessLevel = "most_aware";
     else if (summary.topObjections.length > 0) dominantAwarenessLevel = "product";
     else if (summary.topQuestions.length > 0) dominantAwarenessLevel = "solution";
 
-    // --- Mapa de niveles de consciencia ---
-    const oferta = business.mainOffer ?? "tu oferta";
-    const awarenessMap = [
-      { key: "unaware", label: "Inconsciente", angulo: "Educar sobre el contexto", copy: `¿Sabías esto sobre ${business.category.toLowerCase()}? Te lo contamos simple.` },
-      { key: "problem", label: "Consciente del problema", angulo: "Nombrar el dolor", copy: `Si te pasa ${sevenSuitcases.problema.toLowerCase()}, no sos el único. Hay una salida.` },
-      { key: "solution", label: "Consciente de la solución", angulo: "Mostrar que existe solución", copy: `Así se resuelve, sin complicarte. Mirá cómo.` },
-      { key: "product", label: "Consciente del producto", angulo: "Por qué nosotros", copy: `${oferta} — y por qué te conviene elegirnos a nosotros.` },
-      { key: "most_aware", label: "El más consciente", angulo: "Oferta + urgencia + CTA", copy: `${offer.ofertaGancho}. Escribinos por WhatsApp y lo coordinamos hoy.` },
-    ];
+    // --- Mapa de niveles de consciencia (copys por nivel, generados por IA) ---
+    const awarenessMap = AWARENESS_LEVELS.map((l) => {
+      const c = brain.awarenessCopies.find((x) => x.key === l.key);
+      return { key: l.key, label: l.label, angulo: c?.angulo ?? l.focus, copy: c?.copy ?? "" };
+    });
 
-    // --- Guía de guiones (reels) ---
-    const scriptGuide = [
-      { nombre: "Problema → Solución", estructura: ["Hook con el problema", "Agitar el dolor", `Mostrar ${oferta} como solución`, "Prueba / demostración", "CTA a WhatsApp"] },
-      { nombre: "UGC / Testimonio", estructura: ["Hook personal", "El antes", "El después", "Recomendación honesta", "CTA"] },
-      { nombre: "Demostración", estructura: ["Hook de curiosidad", "Mostrar el uso real", "Beneficio clave", "Oferta", "CTA"] },
-    ];
-
-    // --- Matriz de diversificación creativa (deseo × nivel → hook) ---
-    const creativeMatrix = [
-      { deseo: desires[0], nivel: "problem", formato: "reel", hook: `"Si te preocupa ${desires[0].toLowerCase()}, mirá esto 👀"` },
-      { deseo: desires[0], nivel: "product", formato: "imagen", hook: `${oferta}: pensado para ${avatar.publico.toLowerCase()}` },
-      { deseo: desires[1], nivel: "solution", formato: "reel", hook: `"La forma simple de resolverlo (y rinde)"` },
-      { deseo: desires[1], nivel: "most_aware", formato: "imagen", hook: `${offer.ofertaGancho} — solo por esta semana` },
-      { deseo: desires[2], nivel: "problem", formato: "imagen", hook: `"Lo que nadie te cuenta antes de comprar"` },
-      { deseo: desires[2], nivel: "solution", formato: "reel", hook: `"3 razones para elegir bien"` },
-      { deseo: desires[3] ?? desires[0], nivel: "most_aware", formato: "reel", hook: `"Última oportunidad: ${oferta}"` },
-      { deseo: desires[3] ?? desires[1], nivel: "product", formato: "imagen", hook: `Comparalo: por qué conviene ${business.businessName}` },
-    ];
+    // --- Guía de guiones + matriz de diversificación creativa (IA) ---
+    const scriptGuide = brain.scriptGuide;
+    const creativeMatrix = brain.creativeHooks;
 
     // --- Calculadora de presupuesto (número mágico) ---
     const ticket = price ?? 1000;
@@ -216,7 +210,7 @@ export class MarketStrategyService {
 
     const summaryText = `Estrategia para ${business.businessName} (${business.category}). Nivel de consciencia dominante: ${
       AWARENESS_LEVELS.find((l) => l.key === dominantAwarenessLevel)?.label
-    }. Foco: responder "${sevenSuitcases.problema}" y destacar ${offer.diferenciales[0].toLowerCase()}.`;
+    }. Foco: responder "${sevenSuitcases.problema}" y destacar ${(offer.diferenciales[0] ?? "tu diferencial").toLowerCase()}.`;
 
     return prisma.marketStrategy.upsert({
       where: { businessProfileId },

@@ -9,6 +9,8 @@ import type {
   ContentBrief,
   DigestIdeas,
   QuickCampaignResult,
+  StrategyBrain,
+  StrategyBrainSignals,
   VideoScriptResult,
 } from "./types";
 
@@ -257,5 +259,85 @@ export class MockAIContentService implements AIContentService {
       return { reply: "¡Genial! Con eso te armo la campaña 🙌", extracted, readyToGenerate: true };
     }
     return { reply: stillMissing.ask, extracted, readyToGenerate: false };
+  }
+
+  async generateStrategyBrain(
+    ctx: BusinessContext,
+    s: StrategyBrainSignals
+  ): Promise<StrategyBrain> {
+    const publico = ctx.targetAudience ?? "su público";
+    const oferta = ctx.mainOffer ?? "tu producto/servicio principal";
+    const desires = s.deseosSugeridos.length
+      ? s.deseosSugeridos
+      : ["Tranquilidad", "Aceptación", "Ahorro", "Familia"];
+    const deseos = s.topIntereses.length ? s.topIntereses : s.angulosContenido.slice(0, 2);
+    const problema = s.objeciones[0]?.objecion
+      ? `Lo que frena: "${s.objeciones[0].objecion}"`
+      : "El cliente no encuentra una opción confiable y cercana.";
+    const diferenciales = [
+      "Atención cercana y rápida",
+      "Asesoramiento honesto",
+      ...s.ofertasSugeridas,
+    ].slice(0, 4);
+    const ofertaGancho = s.ofertasSugeridas[0] ?? "Beneficio por tiempo limitado";
+    const awarenessCopy: Record<string, { angulo: string; copy: string }> = {
+      unaware: { angulo: "Educar sobre el contexto", copy: `¿Sabías esto sobre ${ctx.category.toLowerCase()}? Te lo contamos simple.` },
+      problem: { angulo: "Nombrar el dolor", copy: `Si te pasa ${problema.toLowerCase()}, no sos el único. Hay una salida.` },
+      solution: { angulo: "Mostrar que existe solución", copy: "Así se resuelve, sin complicarte. Mirá cómo." },
+      product: { angulo: "Por qué nosotros", copy: `${oferta} — y por qué te conviene elegirnos a nosotros.` },
+      most_aware: { angulo: "Oferta + urgencia + CTA", copy: `${ofertaGancho}. Escribinos por WhatsApp y lo coordinamos hoy.` },
+    };
+    return {
+      propuestaValor: ctx.mainOffer
+        ? `${ctx.businessName} resuelve la necesidad de ${publico} con ${ctx.mainOffer}.`
+        : `${ctx.businessName} para ${publico}.`,
+      avatarPerfil: `${publico} de ${s.zona}. Busca ${(deseos[0] ?? "una buena solución").toLowerCase()} y valora la cercanía y la confianza.`,
+      deseosReiss: desires,
+      dolores: s.objeciones.map((o) => o.objecion),
+      deseos,
+      problema,
+      solucion: oferta,
+      diferenciales,
+      ofertaGancho,
+      objeciones: s.objeciones.length
+        ? s.objeciones.slice(0, 3)
+        : [{ objecion: "Me parece caro", respuesta: "Destacar valor y costo por uso; sumar un beneficio." }],
+      testimonios: ["Pedí 2-3 testimonios reales de clientes (texto o captura de WhatsApp)."],
+      garantia: "Ofrecé una garantía simple (satisfacción o cambio) para bajar el riesgo percibido.",
+      competidores: [
+        {
+          nombre: `Competencia típica del rubro en ${s.zona}`,
+          angulo: s.angulosContenido[0] ?? "Producto + precio",
+          oferta: s.ofertasSugeridas[0] ?? "Descuentos puntuales",
+          comoSuperarlo: "Tu ventaja: cercanía, asesoramiento y trato personal.",
+        },
+        {
+          nombre: "Tiendas grandes / cadenas",
+          angulo: "Variedad y precio",
+          oferta: "Envío y catálogo amplio",
+          comoSuperarlo: "Destacá atención personal y rapidez por WhatsApp.",
+        },
+      ],
+      awarenessCopies: s.niveles.map((l) => ({
+        key: l.key,
+        angulo: awarenessCopy[l.key]?.angulo ?? l.focus,
+        copy: awarenessCopy[l.key]?.copy ?? `Hablá a quien está "${l.label.toLowerCase()}".`,
+      })),
+      creativeHooks: [
+        { deseo: desires[0], nivel: "problem", formato: "reel", hook: `"Si te preocupa ${desires[0].toLowerCase()}, mirá esto 👀"` },
+        { deseo: desires[0], nivel: "product", formato: "imagen", hook: `${oferta}: pensado para ${publico.toLowerCase()}` },
+        { deseo: desires[1] ?? desires[0], nivel: "solution", formato: "reel", hook: '"La forma simple de resolverlo (y rinde)"' },
+        { deseo: desires[1] ?? desires[0], nivel: "most_aware", formato: "imagen", hook: `${ofertaGancho} — solo por esta semana` },
+        { deseo: desires[2] ?? desires[0], nivel: "problem", formato: "imagen", hook: '"Lo que nadie te cuenta antes de comprar"' },
+        { deseo: desires[2] ?? desires[0], nivel: "solution", formato: "reel", hook: '"3 razones para elegir bien"' },
+        { deseo: desires[3] ?? desires[0], nivel: "most_aware", formato: "reel", hook: `"Última oportunidad: ${oferta}"` },
+        { deseo: desires[3] ?? desires[1] ?? desires[0], nivel: "product", formato: "imagen", hook: `Comparalo: por qué conviene ${ctx.businessName}` },
+      ],
+      scriptGuide: [
+        { nombre: "Problema → Solución", estructura: ["Hook con el problema", "Agitar el dolor", `Mostrar ${oferta} como solución`, "Prueba / demostración", "CTA a WhatsApp"] },
+        { nombre: "UGC / Testimonio", estructura: ["Hook personal", "El antes", "El después", "Recomendación honesta", "CTA"] },
+        { nombre: "Demostración", estructura: ["Hook de curiosidad", "Mostrar el uso real", "Beneficio clave", "Oferta", "CTA"] },
+      ],
+    };
   }
 }

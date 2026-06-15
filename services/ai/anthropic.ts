@@ -12,6 +12,8 @@ import type {
   ContentBrief,
   DigestIdeas,
   QuickCampaignResult,
+  StrategyBrain,
+  StrategyBrainSignals,
   VideoScriptResult,
 } from "./types";
 
@@ -64,10 +66,10 @@ export class AnthropicAIContentService implements AIContentService {
       .join("\n");
   }
 
-  private async json<T>(schema: Schema, instruction: string, context: string): Promise<T> {
+  private async json<T>(schema: Schema, instruction: string, context: string, maxTokens = 6000): Promise<T> {
     const res = await this.client.messages.create({
       model: MODEL,
-      max_tokens: 6000,
+      max_tokens: maxTokens,
       system: SYSTEM,
       messages: [{ role: "user", content: `Contexto del negocio:\n${context}\n\nTarea:\n${instruction}` }],
       output_config: { format: { type: "json_schema", schema } },
@@ -322,6 +324,74 @@ export class AnthropicAIContentService implements AIContentService {
     } catch (e) {
       console.error("[AI] chatReply →", e);
       return this.fallback.chatReply(ctx, history, draft);
+    }
+  }
+
+  async generateStrategyBrain(ctx: BusinessContext, s: StrategyBrainSignals): Promise<StrategyBrain> {
+    try {
+      const NIVELES = ["unaware", "problem", "solution", "product", "most_aware"];
+      const objItem = obj({ objecion: { type: "string" }, respuesta: { type: "string" } }, ["objecion", "respuesta"]);
+      const schema = obj(
+        {
+          propuestaValor: { type: "string" },
+          avatarPerfil: { type: "string" },
+          deseosReiss: strArr,
+          dolores: strArr,
+          deseos: strArr,
+          problema: { type: "string" },
+          solucion: { type: "string" },
+          diferenciales: strArr,
+          ofertaGancho: { type: "string" },
+          objeciones: { type: "array", items: objItem },
+          testimonios: strArr,
+          garantia: { type: "string" },
+          competidores: {
+            type: "array",
+            items: obj({ nombre: { type: "string" }, angulo: { type: "string" }, oferta: { type: "string" }, comoSuperarlo: { type: "string" } }, ["nombre", "angulo", "oferta", "comoSuperarlo"]),
+          },
+          awarenessCopies: {
+            type: "array",
+            items: obj({ key: { type: "string", enum: NIVELES }, angulo: { type: "string" }, copy: { type: "string" } }, ["key", "angulo", "copy"]),
+          },
+          creativeHooks: {
+            type: "array",
+            items: obj({ deseo: { type: "string" }, nivel: { type: "string", enum: NIVELES }, formato: { type: "string", enum: ["reel", "imagen"] }, hook: { type: "string" } }, ["deseo", "nivel", "formato", "hook"]),
+          },
+          scriptGuide: { type: "array", items: obj({ nombre: { type: "string" }, estructura: strArr }, ["nombre", "estructura"]) },
+        },
+        ["propuestaValor", "avatarPerfil", "deseosReiss", "dolores", "deseos", "problema", "solucion", "diferenciales", "ofertaGancho", "objeciones", "testimonios", "garantia", "competidores", "awarenessCopies", "creativeHooks", "scriptGuide"],
+      );
+      const signalLines = [
+        `Zona: ${s.zona}`,
+        s.precio != null ? `Precio/ticket aprox: ${s.precio}` : null,
+        s.objeciones.length ? `Objeciones reales detectadas: ${s.objeciones.map((o) => o.objecion).join("; ")}` : null,
+        s.topPreguntas.length ? `Lo que más preguntan: ${s.topPreguntas.join("; ")}` : null,
+        s.topIntereses.length ? `Productos/temas de interés: ${s.topIntereses.join("; ")}` : null,
+        s.ofertasSugeridas.length ? `Ofertas típicas del rubro: ${s.ofertasSugeridas.join("; ")}` : null,
+        s.angulosContenido.length ? `Ángulos de contenido del rubro: ${s.angulosContenido.join("; ")}` : null,
+        `Deseos de Reiss sugeridos para el rubro: ${s.deseosSugeridos.join(", ")}`,
+        `Los 16 deseos de Reiss (elegí los 3-4 más afines): ${s.reissOpciones.join(", ")}`,
+        `Niveles de consciencia (usá estas keys exactas): ${s.niveles.map((n) => `${n.key} (${n.label}: ${n.focus})`).join(" | ")}`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      return await this.json<StrategyBrain>(
+        schema,
+        `Sos estratega de marketing. Armá la ESTRATEGIA del negocio, súper específica (nada genérico ni "verde"), usando estos frameworks:
+- ADN + 'propuestaValor' (posicionamiento en 1 frase potente).
+- Avatar: 'avatarPerfil' (2-3 frases vívidas del cliente ideal), 'deseosReiss' (3-4 de la lista de los 16), 'dolores' (3-4 reales) y 'deseos' (3-4 aspiraciones).
+- 7 maletas: 'problema' (el dolor central), 'solucion' (cómo lo resuelve este negocio), 'diferenciales' (3-4), 'objeciones' (3, cada una con 'objecion' y 'respuesta' que la derribe), 'testimonios' (2-3 ideas concretas de testimonios a pedir) y 'garantia' (una reversión de riesgo creíble). 'ofertaGancho' = la oferta irresistible.
+- 'competidores' (2-3 típicos del rubro en la zona) con 'nombre', 'angulo', 'oferta' y 'comoSuperarlo' (la ventaja concreta de este negocio).
+- 'awarenessCopies': UNA entrada por cada nivel de consciencia (las 5 keys), con 'angulo' y un 'copy' de ejemplo para ese nivel.
+- 'creativeHooks': 6-8 hooks combinando deseo × nivel (key) × formato ("reel"/"imagen").
+- 'scriptGuide': 3 guiones de reel con 'nombre' y 'estructura' (4-6 pasos).
+Todo en español rioplatense, concreto al negocio y su oferta. Respetá el tono y NUNCA uses palabras prohibidas.`,
+        `${this.ctxLines(ctx)}\n\nSeñales del negocio:\n${signalLines}`,
+        8000, // el esquema del cerebro es grande: más margen para no truncar
+      );
+    } catch (e) {
+      console.error("[AI] generateStrategyBrain →", e);
+      return this.fallback.generateStrategyBrain(ctx, s);
     }
   }
 }
