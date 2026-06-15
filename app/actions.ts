@@ -215,13 +215,23 @@ export async function createBusiness(formData: FormData) {
 
   const budgetRaw = str("monthlyAdBudget");
   const tone = str("toneOfVoice") ?? "Cercano, simple y vendedor";
+  const richDescription =
+    [
+      str("description"),
+      str("problem") ? `Problema que resuelve: ${str("problem")}` : null,
+      str("differentiators") ? `Por qué lo eligen / diferenciales: ${str("differentiators")}` : null,
+      str("objections") ? `Objeciones comunes: ${str("objections")}` : null,
+      str("guarantee") ? `Garantía / promesa: ${str("guarantee")}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n") || null;
 
   const business = await prisma.businessProfile.create({
     data: {
       userId: user.id,
       businessName,
       category: str("category") ?? "General",
-      description: str("description"),
+      description: richDescription,
       city: str("city"),
       country: str("country") ?? "Uruguay",
       targetAudience: str("targetAudience"),

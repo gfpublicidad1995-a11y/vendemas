@@ -49,6 +49,7 @@ export class AnthropicAIContentService implements AIContentService {
       ctx.targetAudience ? `Público objetivo: ${ctx.targetAudience}` : null,
       ctx.toneOfVoice ? `Tono de voz: ${ctx.toneOfVoice}` : null,
       ctx.mainOffer ? `Oferta principal: ${ctx.mainOffer}` : null,
+      ctx.description ? `Sobre la marca (contexto, problema, diferenciales, objeciones): ${ctx.description}` : null,
       ctx.preferredWords?.length ? `Palabras preferidas: ${ctx.preferredWords.join(", ")}` : null,
       ctx.forbiddenWords?.length ? `Palabras PROHIBIDAS: ${ctx.forbiddenWords.join(", ")}` : null,
       brief?.productOrService ? `Producto/servicio a promocionar: ${brief.productOrService}` : null,

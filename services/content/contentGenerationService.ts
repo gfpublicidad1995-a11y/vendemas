@@ -34,6 +34,7 @@ function toContext(business: LoadedOrder["businessProfile"]): BusinessContext {
     toneOfVoice: business.toneOfVoice ?? business.brandKit?.toneOfVoice,
     mainOffer: business.mainOffer,
     targetAudience: business.targetAudience,
+    description: business.description,
     preferredWords: asStringArray(business.brandKit?.preferredWords),
     forbiddenWords: asStringArray(business.brandKit?.forbiddenWords),
   };

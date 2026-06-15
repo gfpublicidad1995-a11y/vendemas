@@ -9,6 +9,7 @@ export interface BusinessContext {
   toneOfVoice?: string | null;
   mainOffer?: string | null;
   targetAudience?: string | null;
+  description?: string | null;
   preferredWords?: string[];
   forbiddenWords?: string[];
 }

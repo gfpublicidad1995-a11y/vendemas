@@ -63,9 +63,21 @@ export function BriefForm({
             <textarea
               name="description"
               rows={3}
-              placeholder="Historia, qué te diferencia, qué querés transmitir, productos estrella…"
+              placeholder="Historia, qué querés transmitir, productos estrella…"
               className={inputClass}
             />
+          </Field>
+          <Field label="¿Qué problema le resolvés a tu cliente?" full>
+            <input name="problem" placeholder="Ej: no consiguen X cerca, pierden tiempo, no saben cuál elegir…" className={inputClass} />
+          </Field>
+          <Field label="¿Por qué te eligen a vos? (lo que te diferencia)" full>
+            <input name="differentiators" placeholder="Ej: atención rápida, envío en el día, asesoramiento, mejor precio" className={inputClass} />
+          </Field>
+          <Field label="¿Qué los hace dudar antes de comprar? (objeciones)" full>
+            <input name="objections" placeholder="Ej: «es caro», «no sé si me sirve», «desconfío del envío»" className={inputClass} />
+          </Field>
+          <Field label="¿Tenés alguna garantía o promesa?" full>
+            <input name="guarantee" placeholder="Ej: satisfacción garantizada, cambios sin costo, devolución" className={inputClass} />
           </Field>
           <Field label="Tono de voz">
             <input name="toneOfVoice" placeholder="Ej: cercano, simple y vendedor" className={inputClass} />
