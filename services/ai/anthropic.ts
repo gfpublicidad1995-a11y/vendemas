@@ -7,6 +7,8 @@ import type {
   AngledAd,
   BusinessContext,
   CarouselResult,
+  ChatReplyResult,
+  ChatTurn,
   ContentBrief,
   DigestIdeas,
   QuickCampaignResult,
@@ -278,6 +280,48 @@ export class AnthropicAIContentService implements AIContentService {
     } catch (e) {
       console.error("[AI] generateVisualPromptBase →", e);
       return this.fallback.generateVisualPromptBase(ctx, subject);
+    }
+  }
+
+  async chatReply(
+    ctx: BusinessContext | null,
+    history: ChatTurn[],
+    draft: Record<string, string>,
+  ): Promise<ChatReplyResult> {
+    try {
+      const histText = history
+        .map((m) => `${m.from === "user" ? "Cliente" : "VendeMás"}: ${m.text}`)
+        .join("\n");
+      const draftText =
+        Object.entries(draft)
+          .filter(([, v]) => v)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(" · ") || "todavía nada";
+      const context = ctx ? this.ctxLines(ctx) : "Negocio nuevo (todavía sin datos cargados).";
+      return await this.json<ChatReplyResult>(
+        obj(
+          {
+            reply: { type: "string" },
+            extracted: obj(
+              {
+                businessName: { type: "string" },
+                category: { type: "string" },
+                product: { type: "string" },
+                offer: { type: "string" },
+                budget: { type: "string" },
+              },
+              ["businessName", "category", "product", "offer", "budget"],
+            ),
+            readyToGenerate: { type: "boolean" },
+          },
+          ["reply", "extracted", "readyToGenerate"],
+        ),
+        `Sos el asistente de WhatsApp de VendeMás. Charlás con un emprendedor para armarle una "Campaña Rápida". Respondé natural, cálido y breve a lo ÚLTIMO que escribió, y andá juntando: nombre del negocio, producto o servicio, precio u oferta, y presupuesto diario. Pedí UNA cosa por vez. En 'extracted' poné SOLO lo que el cliente dijo (string vacío en lo que no dijo). readyToGenerate=true SOLO con producto + (precio u oferta) + presupuesto.\n\nConversación:\n${histText}\n\nDatos ya recolectados: ${draftText}`,
+        context,
+      );
+    } catch (e) {
+      console.error("[AI] chatReply →", e);
+      return this.fallback.chatReply(ctx, history, draft);
     }
   }
 }

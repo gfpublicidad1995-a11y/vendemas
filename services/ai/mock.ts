@@ -4,6 +4,8 @@ import type {
   AngledAd,
   BusinessContext,
   CarouselResult,
+  ChatReplyResult,
+  ChatTurn,
   ContentBrief,
   DigestIdeas,
   QuickCampaignResult,
@@ -228,5 +230,32 @@ export class MockAIContentService implements AIContentService {
     return `Foto comercial de ${subject} para ${ctx.businessName}, estilo ${
       ctx.toneOfVoice ?? "limpio y cercano"
     }, fondo prolijo, producto protagonista, iluminación natural.`;
+  }
+
+  async chatReply(
+    _ctx: BusinessContext | null,
+    history: ChatTurn[],
+    draft: Record<string, string>
+  ): Promise<ChatReplyResult> {
+    const lastUser = [...history].reverse().find((m) => m.from === "user")?.text?.trim() ?? "";
+    const order: { key: "product" | "offer" | "budget"; ask: string }[] = [
+      { key: "product", ask: "¿Qué producto o servicio querés promocionar? 🙂" },
+      { key: "offer", ask: "¿Cuál es el precio o la promo? (ej: $890 con envío gratis)" },
+      { key: "budget", ask: "¿Cuánto pensás invertir por día? (ej: USD 10/día)" },
+    ];
+    const extracted: ChatReplyResult["extracted"] = {};
+    const firstMissing = order.find((o) => !draft[o.key]);
+    const isOpener =
+      Object.keys(draft).length === 0 &&
+      /^(hola|buenas|hi|hello|quiero|necesito|vender|promo)/i.test(lastUser);
+    if (firstMissing && lastUser && !isOpener) {
+      extracted[firstMissing.key] = lastUser;
+    }
+    const after: Record<string, string> = { ...draft, ...extracted };
+    const stillMissing = order.find((o) => !after[o.key]);
+    if (!stillMissing) {
+      return { reply: "¡Genial! Con eso te armo la campaña 🙌", extracted, readyToGenerate: true };
+    }
+    return { reply: stillMissing.ask, extracted, readyToGenerate: false };
   }
 }

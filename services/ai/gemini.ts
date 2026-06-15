@@ -6,6 +6,8 @@ import type {
   AngledAd,
   BusinessContext,
   CarouselResult,
+  ChatReplyResult,
+  ChatTurn,
   ContentBrief,
   DigestIdeas,
   QuickCampaignResult,
@@ -276,6 +278,42 @@ export class GeminiAIContentService implements AIContentService {
     } catch (e) {
       console.error("[AI/gemini] generateVisualPromptBase →", e);
       return this.fallback.generateVisualPromptBase(ctx, subject);
+    }
+  }
+
+  async chatReply(
+    ctx: BusinessContext | null,
+    history: ChatTurn[],
+    draft: Record<string, string>,
+  ): Promise<ChatReplyResult> {
+    try {
+      const histText = history
+        .map((m) => `${m.from === "user" ? "Cliente" : "VendeMás"}: ${m.text}`)
+        .join("\n");
+      const draftText =
+        Object.entries(draft)
+          .filter(([, v]) => v)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(" · ") || "todavía nada";
+      const context = ctx ? this.ctxLines(ctx) : "Negocio nuevo (todavía sin datos cargados).";
+      return await this.json<ChatReplyResult>(
+        gobj(
+          {
+            reply: GSTR,
+            extracted: gobj(
+              { businessName: GSTR, category: GSTR, product: GSTR, offer: GSTR, budget: GSTR },
+              [],
+            ),
+            readyToGenerate: { type: "BOOLEAN" },
+          },
+          ["reply", "extracted", "readyToGenerate"],
+        ),
+        `Sos el asistente de WhatsApp de VendeMás. Charlás con un emprendedor para armarle una "Campaña Rápida" de contenido y anuncios. Respondé natural, cálido y breve (estilo WhatsApp) a lo ÚLTIMO que escribió, y andá juntando lo que falta: nombre del negocio, qué producto o servicio quiere promocionar, el precio u oferta, y cuánto puede invertir por día. Pedí UNA cosa por vez, sin abrumar. Si pregunta algo, respondéselo. En 'extracted' poné SOLO los datos que el cliente ya dijo (no inventes; dejá vacío lo que no dijo). Poné readyToGenerate=true SOLO cuando ya tengas producto + (precio u oferta) + presupuesto.\n\nConversación hasta ahora:\n${histText}\n\nDatos ya recolectados: ${draftText}`,
+        context,
+      );
+    } catch (e) {
+      console.error("[AI/gemini] chatReply →", e);
+      return this.fallback.chatReply(ctx, history, draft);
     }
   }
 }

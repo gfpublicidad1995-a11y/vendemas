@@ -11,7 +11,7 @@ interface ChatMessage {
 }
 
 function makeSession(phone: string): SimSession {
-  return { phone, phase: "start", draft: {} };
+  return { phone, phase: "chatting", draft: {} };
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -113,7 +113,7 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
       const res = await simulateTurn(
         session,
         trimmed,
-        session.phase === "qc_budget" ? photos : undefined,
+        Object.keys(photos).length ? photos : undefined,
       );
       setSession(res.session);
       // Revelamos las respuestas de a una, con una pausa de "escribiendo…" entre

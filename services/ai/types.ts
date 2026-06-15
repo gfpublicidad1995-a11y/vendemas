@@ -78,6 +78,25 @@ export interface DigestIdeas {
   recommendedAction: string;
 }
 
+export interface ChatTurn {
+  from: "user" | "bot";
+  text: string;
+}
+
+export interface ChatExtracted {
+  businessName?: string;
+  category?: string;
+  product?: string;
+  offer?: string;
+  budget?: string;
+}
+
+export interface ChatReplyResult {
+  reply: string;
+  extracted: ChatExtracted;
+  readyToGenerate: boolean;
+}
+
 export interface AIContentService {
   generateAdCopies(ctx: BusinessContext, brief: ContentBrief): Promise<AdsPackResult>;
   generateAngledAds(ctx: BusinessContext, brief: ContentBrief, hooks?: string[]): Promise<AngledAd[]>;
@@ -95,4 +114,10 @@ export interface AIContentService {
   generateQuickCampaign(ctx: BusinessContext, brief: ContentBrief): Promise<QuickCampaignResult>;
   generateRevision(original: string, instruction: string): Promise<string>;
   generateVisualPromptBase(ctx: BusinessContext, subject: string): Promise<string>;
+  /** Conversación de WhatsApp manejada por IA: entiende, responde y extrae datos. */
+  chatReply(
+    ctx: BusinessContext | null,
+    history: ChatTurn[],
+    draft: Record<string, string>
+  ): Promise<ChatReplyResult>;
 }
