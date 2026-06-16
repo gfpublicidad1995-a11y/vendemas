@@ -8,10 +8,13 @@ import {
   campaignStatusLabel,
   contentPieceTypeLabel,
   validationStatusLabel,
+  statusLabel,
   toneForStatus,
 } from "@/lib/labels";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { asStringArray } from "@/lib/json";
+import { humanPlacement } from "@/services/meta-creative-specs/metaCreativeSpecs";
+import type { MetaPlacement } from "@/lib/validators/enums";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +56,7 @@ export default async function OrderDetailPage({
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Badge tone={toneForStatus(order.status)}>{orderStatusLabel(order.status)}</Badge>
         {approval ? (
-          <Badge tone={toneForStatus(approval.status)}>Aprobación: {approval.status}</Badge>
+          <Badge tone={toneForStatus(approval.status)}>Aprobación: {statusLabel(approval.status)}</Badge>
         ) : null}
         <span className="text-xs text-stone-400">Creado {formatDate(order.createdAt)}</span>
       </div>
@@ -83,7 +86,7 @@ export default async function OrderDetailPage({
             <Card className="p-5">
               <SectionTitle>
                 <Link href="/dashboard/visuals" className="hover:underline">
-                  Visuales por ubicación
+                  Imágenes
                 </Link>
               </SectionTitle>
               <div className="grid grid-cols-3 gap-3">
@@ -131,7 +134,7 @@ export default async function OrderDetailPage({
                   <dt className="text-xs text-stone-400">Ubicaciones</dt>
                   <dd className="flex flex-wrap gap-1">
                     {asStringArray(campaign.placements).map((p) => (
-                      <Badge key={p}>{p}</Badge>
+                      <Badge key={p}>{humanPlacement(p as MetaPlacement)}</Badge>
                     ))}
                   </dd>
                 </div>

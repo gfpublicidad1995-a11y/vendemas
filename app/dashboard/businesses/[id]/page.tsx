@@ -92,10 +92,10 @@ export default async function BusinessDetailPage({
           </Card>
 
           <Card className="p-5">
-            <SectionTitle>Insights detectados</SectionTitle>
+            <SectionTitle>Aprendizajes de los clientes</SectionTitle>
             <div className="divide-y divide-stone-100">
               {business.conversationInsights.length === 0 ? (
-                <p className="py-3 text-sm text-stone-400">Sin insights.</p>
+                <p className="py-3 text-sm text-stone-400">Sin aprendizajes todavía.</p>
               ) : (
                 business.conversationInsights.map((i) => (
                   <Link
@@ -140,7 +140,7 @@ export default async function BusinessDetailPage({
 
           {business.brandKit ? (
             <Card className="p-5">
-              <SectionTitle>Brand Kit</SectionTitle>
+              <SectionTitle>Identidad de marca</SectionTitle>
               <div className="flex items-center gap-3">
                 <span
                   className="h-8 w-8 rounded-lg ring-1 ring-stone-200"
@@ -164,7 +164,7 @@ export default async function BusinessDetailPage({
           ) : null}
 
           <Card className="p-5">
-            <SectionTitle>Assets ({business.assets.length})</SectionTitle>
+            <SectionTitle>Fotos y logo ({business.assets.length})</SectionTitle>
             <div className="grid grid-cols-3 gap-2">
               {business.assets.map((a) => (
                 <div key={a.id} className="overflow-hidden rounded-lg ring-1 ring-stone-200">
@@ -176,7 +176,7 @@ export default async function BusinessDetailPage({
           </Card>
 
           <Card className="p-5">
-            <SectionTitle>Consentimientos</SectionTitle>
+            <SectionTitle>Permisos</SectionTitle>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center justify-between">
                 <span className="text-stone-600">Analizar conversaciones</span>
@@ -193,17 +193,17 @@ export default async function BusinessDetailPage({
               <li className="flex items-center justify-between">
                 <span className="text-stone-600">Ideas para mañana</span>
                 <Badge tone={business.dailyDigestEnabled ? "green" : "red"}>
-                  {business.dailyDigestEnabled ? `${business.dailyDigestTime}` : "Off"}
+                  {business.dailyDigestEnabled ? `${business.dailyDigestTime}` : "No"}
                 </Badge>
               </li>
             </ul>
           </Card>
 
           <Card className="p-5">
-            <SectionTitle>Reportes diarios</SectionTitle>
+            <SectionTitle>Ideas para mañana</SectionTitle>
             <div className="divide-y divide-stone-100">
               {business.dailyDigests.length === 0 ? (
-                <p className="py-2 text-sm text-stone-400">Sin reportes.</p>
+                <p className="py-2 text-sm text-stone-400">Sin ideas todavía.</p>
               ) : (
                 business.dailyDigests.map((d) => (
                   <Link

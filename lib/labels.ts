@@ -81,6 +81,9 @@ export const statusLabel = dict({
   active: "Activo",
   used: "Usado",
   new: "Nuevo",
+  changes_requested: "Cambios pedidos",
+  rejected: "Rechazado",
+  failed: "Falló",
 });
 
 // Tipos de contenido (calendario, oportunidades) → español.
