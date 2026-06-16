@@ -240,10 +240,16 @@ export class MockAIContentService implements AIContentService {
     draft: Record<string, string>
   ): Promise<ChatReplyResult> {
     const lastUser = [...history].reverse().find((m) => m.from === "user")?.text?.trim() ?? "";
-    const order: { key: "product" | "offer" | "budget"; ask: string }[] = [
-      { key: "product", ask: "¿Qué producto o servicio querés promocionar? 🙂" },
-      { key: "offer", ask: "¿Cuál es el precio o la promo? (ej: $890 con envío gratis)" },
-      { key: "budget", ask: "¿Cuánto pensás invertir por día? (ej: USD 10/día)" },
+    const order: {
+      key: "product" | "targetAudience" | "differentiators" | "objections" | "offer" | "budget";
+      ask: string;
+    }[] = [
+      { key: "product", ask: "¡Buenísimo! ¿Qué vendés o qué querés promocionar? 🙂" },
+      { key: "targetAudience", ask: "¿A quién le vendés? Contame quién es tu cliente ideal." },
+      { key: "differentiators", ask: "¿Por qué te eligen a vos? ¿Qué te hace diferente?" },
+      { key: "objections", ask: "¿Qué suele frenar a la gente antes de comprarte?" },
+      { key: "offer", ask: "¿Cuál es tu oferta o precio? (ej: $890 con envío gratis)" },
+      { key: "budget", ask: "Por último: ¿cuánto querés invertir por día? (ej: USD 10/día)" },
     ];
     const extracted: ChatReplyResult["extracted"] = {};
     const firstMissing = order.find((o) => !draft[o.key]);
@@ -256,7 +262,7 @@ export class MockAIContentService implements AIContentService {
     const after: Record<string, string> = { ...draft, ...extracted };
     const stillMissing = order.find((o) => !after[o.key]);
     if (!stillMissing) {
-      return { reply: "¡Genial! Con eso te armo la campaña 🙌", extracted, readyToGenerate: true };
+      return { reply: "¡Genial! Con esto te armo la estrategia y el contenido 🙌", extracted, readyToGenerate: true };
     }
     return { reply: stillMissing.ask, extracted, readyToGenerate: false };
   }

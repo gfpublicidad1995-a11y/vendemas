@@ -192,13 +192,28 @@ async function resolveBusiness(session: SimSession): Promise<string> {
     update: {},
     create: { name, phone: session.phone, role: "owner" },
   });
-  const description = session.draft.description?.trim() || null;
+  // Descripción rica: junta lo que contó el cliente (problema, diferenciales,
+  // objeciones) para que la estrategia y el contenido salgan a su medida.
+  const d = session.draft;
+  const richDescription =
+    [
+      d.description?.trim() || null,
+      d.problem?.trim() ? `Problema que resuelve: ${d.problem.trim()}` : null,
+      d.differentiators?.trim() ? `Por qué lo eligen: ${d.differentiators.trim()}` : null,
+      d.objections?.trim() ? `Objeciones comunes: ${d.objections.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n") || null;
+  const targetAudience = d.targetAudience?.trim() || null;
   const existing = await prisma.businessProfile.findFirst({
     where: { userId: user.id, businessName: name },
   });
-  // Si ya existe pero le falta la descripción, la completamos con lo que junta el chat.
-  if (existing && !existing.description && description) {
-    await prisma.businessProfile.update({ where: { id: existing.id }, data: { description } });
+  // Si ya existe, completamos lo que falte con lo que juntó el chat.
+  if (existing) {
+    const patch: { description?: string; targetAudience?: string } = {};
+    if (!existing.description && richDescription) patch.description = richDescription;
+    if (!existing.targetAudience && targetAudience) patch.targetAudience = targetAudience;
+    if (Object.keys(patch).length) await prisma.businessProfile.update({ where: { id: existing.id }, data: patch });
   }
   const business =
     existing ??
@@ -209,7 +224,8 @@ async function resolveBusiness(session: SimSession): Promise<string> {
         category: session.draft.category?.trim() || "General",
         country: "Uruguay",
         mainOffer: session.draft.offer || session.draft.product || null,
-        description,
+        description: richDescription,
+        targetAudience,
         toneOfVoice: "Cercano, simple y vendedor",
         consentToAnalyzeConversations: true,
         digestWhatsappOptIn: true,

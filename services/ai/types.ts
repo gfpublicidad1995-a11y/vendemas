@@ -91,6 +91,14 @@ export interface ChatExtracted {
   budget?: string;
   /** Resumen del negocio (qué vende y qué lo hace especial) según lo que contó el cliente. */
   description?: string;
+  /** A quién le vende (cliente ideal) — clave para el avatar de la estrategia. */
+  targetAudience?: string;
+  /** Qué problema le resuelve a su cliente. */
+  problem?: string;
+  /** Por qué lo eligen / qué lo diferencia. */
+  differentiators?: string;
+  /** Qué frena a la gente antes de comprar (objeciones). */
+  objections?: string;
 }
 
 export interface ChatReplyResult {
