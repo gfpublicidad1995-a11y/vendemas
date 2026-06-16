@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
-import { alertTypeLabel, priorityLabel, toneForPriority } from "@/lib/labels";
+import { alertTypeLabel, priorityLabel, toneForPriority, contentTypeLabel } from "@/lib/labels";
 import { createContentFromAlert, generateOpportunities } from "@/app/actions";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -84,7 +84,7 @@ export default async function OpportunitiesPage() {
             {opportunities.map((o) => (
               <Card key={o.id} className="p-4">
                 <div className="flex items-center justify-between">
-                  <Badge tone="blue">{o.contentType}</Badge>
+                  <Badge tone="blue">{contentTypeLabel(o.contentType)}</Badge>
                   <Badge tone={toneForPriority(o.priority)}>{priorityLabel(o.priority)}</Badge>
                 </div>
                 <h3 className="mt-2 font-medium text-stone-800">{o.title}</h3>

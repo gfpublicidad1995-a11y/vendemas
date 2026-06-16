@@ -15,8 +15,8 @@ export default async function CreativeSpecsPage() {
   return (
     <div>
       <PageHeader
-        title="Especificaciones de Meta Ads"
-        description="Medidas, ratios y zonas seguras por ubicación. Se guardan en la base para actualizarlas fácil cuando Meta cambie sus recomendaciones."
+        title="Tamaños de anuncios"
+        description="Las medidas que recomiendan Facebook e Instagram para cada lugar (feed, historias, etc.), para que tus imágenes se vean siempre bien. Es una referencia."
       />
       {specs.length === 0 ? (
         <EmptyState title="Sin especificaciones cargadas" description="Corré el seed para cargarlas." />

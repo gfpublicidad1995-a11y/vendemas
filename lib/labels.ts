@@ -66,6 +66,36 @@ export const awarenessLevelLabel = dict({
   most_aware: "El más consciente",
 });
 
+// Estados genéricos (reportes, calendario, ideas, etc.) → español.
+export const statusLabel = dict({
+  pending: "Pendiente",
+  generated: "Listo",
+  ready: "Listo",
+  sent: "Enviado",
+  done: "Hecho",
+  completed: "Completado",
+  draft: "Borrador",
+  approved: "Aprobado",
+  scheduled: "Programado",
+  published: "Publicado",
+  active: "Activo",
+  used: "Usado",
+  new: "Nuevo",
+});
+
+// Tipos de contenido (calendario, oportunidades) → español.
+export const contentTypeLabel = dict({
+  post: "Publicación",
+  reel: "Reel",
+  story: "Historia",
+  carousel: "Carrusel",
+  ad: "Anuncio",
+  ad_copy: "Anuncio",
+  video: "Video",
+  image: "Imagen",
+  content_idea: "Idea de contenido",
+});
+
 export const insightTypeLabel = dict({
   faq: "Pregunta frecuente",
   objection: "Objeción",

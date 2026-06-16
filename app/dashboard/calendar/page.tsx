@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
+import { statusLabel, contentTypeLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
 import { generateCalendar, createContentFromCalendarItem } from "@/app/actions";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -49,14 +50,14 @@ export default async function CalendarPage() {
                     {cal.businessProfile.businessName} · {formatDate(cal.startDate)} → {formatDate(cal.endDate)}
                   </p>
                 </div>
-                <Badge tone="amber">{cal.status}</Badge>
+                <Badge tone="amber">{statusLabel(cal.status)}</Badge>
               </div>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {cal.items.map((it) => (
                   <div key={it.id} className="rounded-xl border border-stone-100 p-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-stone-400">{formatDate(it.date)}</span>
-                      <Badge tone="blue">{it.contentType}</Badge>
+                      <Badge tone="blue">{contentTypeLabel(it.contentType)}</Badge>
                     </div>
                     <div className="mt-1 text-sm font-medium text-stone-800">{it.title}</div>
                     {it.suggestedCopy ? (
@@ -74,7 +75,7 @@ export default async function CalendarPage() {
                         </SubmitButton>
                       </form>
                     ) : (
-                      <Badge tone="green" className="mt-2">{it.status}</Badge>
+                      <Badge tone="green" className="mt-2">{statusLabel(it.status)}</Badge>
                     )}
                   </div>
                 ))}

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge, Card, EmptyState, PageHeader, SectionTitle } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 import { asStringArray } from "@/lib/json";
+import { statusLabel } from "@/lib/labels";
 import { generateWeeklyReport } from "@/app/actions";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -56,7 +57,7 @@ export default async function WeeklyReportsPage() {
                 <h2 className="font-semibold text-stone-800">
                   {r.businessProfile.businessName} · {formatDate(r.weekStartDate)} → {formatDate(r.weekEndDate)}
                 </h2>
-                <Badge tone="green">{r.status}</Badge>
+                <Badge tone="green">{statusLabel(r.status)}</Badge>
               </div>
               {r.summary ? <p className="mb-4 text-sm text-stone-600">{r.summary}</p> : null}
               <div className="grid gap-4 sm:grid-cols-2">
@@ -71,7 +72,7 @@ export default async function WeeklyReportsPage() {
                 </div>
               </div>
               <div className="mt-4 flex gap-6 text-sm text-stone-500">
-                <span>{r.totalConversations} conversaciones</span>
+                <span>{r.totalConversations} charlas</span>
                 <span>{r.totalMessages} mensajes</span>
               </div>
             </Card>

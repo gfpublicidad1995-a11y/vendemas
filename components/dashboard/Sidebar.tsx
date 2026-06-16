@@ -46,7 +46,7 @@ const NAV: NavGroup[] = [
       { href: "/dashboard/content", label: "Piezas generadas", icon: FileText },
       { href: "/dashboard/visuals", label: "Imágenes", icon: ImageIcon },
       { href: "/dashboard/campaigns", label: "Campañas", icon: Megaphone },
-      { href: "/dashboard/creative-specs", label: "Specs Meta Ads", icon: Ruler },
+      { href: "/dashboard/creative-specs", label: "Tamaños de anuncios", icon: Ruler },
       { href: "/dashboard/deliveries", label: "Entregas", icon: PackageCheck },
     ],
   },

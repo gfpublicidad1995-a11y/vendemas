@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
-import { toneForStatus } from "@/lib/labels";
+import { toneForStatus, statusLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,10 @@ export default async function DigestsPage() {
         description="Cada día analizamos las consultas y te preparamos ideas de contenido y anuncios para el día siguiente."
       />
       {digests.length === 0 ? (
-        <EmptyState title="Sin reportes todavía" />
+        <EmptyState
+          title="Sin ideas todavía"
+          description="Aparecen cada día a partir de las charlas con tus clientes."
+        />
       ) : (
         <Card className="divide-y divide-stone-100">
           {digests.map((d) => (
@@ -34,7 +37,7 @@ export default async function DigestsPage() {
                   {d.businessProfile.businessName} · {d.totalConversations} charlas · {d.totalMessages} mensajes
                 </div>
               </div>
-              <Badge tone={toneForStatus(d.status)}>{d.status}</Badge>
+              <Badge tone={toneForStatus(d.status)}>{statusLabel(d.status)}</Badge>
             </Link>
           ))}
         </Card>
