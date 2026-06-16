@@ -74,12 +74,24 @@ function PhotoRow({
   );
 }
 
-const QUICK_CHIPS = [
-  "Hola",
-  "Quiero vender más esta semana",
-  "1",
-  "2",
-];
+// Chips rápidos según el momento de la charla, para guiar al usuario.
+const CHIPS_BY_PHASE: Record<string, { label: string; value: string }[]> = {
+  chatting: [
+    { label: "Hola 👋", value: "Hola" },
+    { label: "Quiero vender más esta semana", value: "Quiero vender más esta semana" },
+    { label: "¿Qué podés hacer?", value: "¿Qué podés hacer por mi negocio?" },
+  ],
+  waiting_approval: [
+    { label: "✅ Aprobar", value: "1" },
+    { label: "✏️ Pedir cambios", value: "2" },
+    { label: "🔥 Más vendedor", value: "3" },
+    { label: "🔁 Más versiones", value: "4" },
+  ],
+  collecting_changes: [
+    { label: "Hacelo más corto", value: "Hacelo más corto" },
+    { label: "Más vendedor", value: "Hacelo más vendedor" },
+  ],
+};
 
 export function Simulator({ defaultPhone }: { defaultPhone: string }) {
   const [phone, setPhone] = useState(defaultPhone);
@@ -203,14 +215,14 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
 
         <div className="border-t border-stone-100 p-3">
           <div className="mb-2 flex flex-wrap gap-1">
-            {QUICK_CHIPS.map((c) => (
+            {(CHIPS_BY_PHASE[session.phase] ?? CHIPS_BY_PHASE.chatting).map((c) => (
               <button
-                key={c}
-                onClick={() => send(c)}
+                key={c.value}
+                onClick={() => send(c.value)}
                 disabled={loading}
                 className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-600 hover:bg-stone-200 disabled:opacity-50"
               >
-                {c}
+                {c.label}
               </button>
             ))}
           </div>
@@ -256,7 +268,7 @@ export function Simulator({ defaultPhone }: { defaultPhone: string }) {
           <ul className="mt-2 space-y-1 text-stone-500">
             <li>• Negocio existente: ya está cargado, escribí “quiero vender más”.</li>
             <li>• Campaña Rápida: te pide producto, precio y presupuesto.</li>
-            <li>• Aprobación: respondé 1, 2, 3 o 5.</li>
+            <li>• Aprobación: tocá un botón (Aprobar, Pedir cambios…) o respondé 1 a 4.</li>
           </ul>
           <button
             onClick={newNumber}

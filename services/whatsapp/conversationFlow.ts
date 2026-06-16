@@ -169,7 +169,7 @@ export async function handleTurn(
       session.lastDeliveryUrl = result.deliveryUrl;
       session.phase = "waiting_approval";
       say(
-        "¡Listo! Te armé historias, carrusel, anuncios, copies, guion de reel y los visuales en 4:5, 1:1, 9:16 y 1.91:1 ✨",
+        "¡Listo! 🎉 Te preparé todo para esta semana: historias, un carrusel, anuncios, textos para copiar, un guion para un reel y las imágenes en los tamaños que usan Facebook e Instagram. Te dejo todo acá 👇",
       );
       say(
         whatsappTemplates.deliveryLink(session.businessName ?? "tu negocio", result.deliveryUrl),
