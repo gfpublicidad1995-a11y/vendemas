@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef } from "react";
 import {
   approveOrder,
   createContentFromDigestItem,
@@ -45,18 +48,48 @@ export function ApproveOrderButton({ orderId }: { orderId: string }) {
   );
 }
 
+const CHANGE_CHIPS = [
+  "Hacelo más corto",
+  "Más vendedor",
+  "Cambiá la imagen",
+  "Dame otra opción",
+];
+
 export function RequestChangesForm({ orderId }: { orderId: string }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function pick(text: string) {
+    if (inputRef.current) inputRef.current.value = text;
+    formRef.current?.requestSubmit();
+  }
+
   return (
-    <form action={requestChanges} className="flex gap-2">
+    <form ref={formRef} action={requestChanges} className="space-y-2">
       <input type="hidden" name="orderId" value={orderId} />
-      <input
-        name="instruction"
-        placeholder="Ej: hacelo más corto / más vendedor…"
-        className="flex-1 rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
-      />
-      <SubmitButton className={secondaryBtn} pendingText="Aplicando…">
-        Pedir cambios
-      </SubmitButton>
+      <div className="flex flex-wrap gap-1.5">
+        {CHANGE_CHIPS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => pick(c)}
+            className="rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-medium text-stone-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          name="instruction"
+          placeholder="O escribí con tus palabras qué querés cambiar…"
+          className="flex-1 rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+        />
+        <SubmitButton className={secondaryBtn} pendingText="Aplicando…">
+          Pedir cambios
+        </SubmitButton>
+      </div>
     </form>
   );
 }
