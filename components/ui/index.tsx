@@ -44,7 +44,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-stone-200 bg-white shadow-sm",
+        "rounded-2xl border border-stone-200/80 bg-white vm-shadow-card",
         className
       )}
     >
@@ -100,12 +100,12 @@ export function StatCard({
     emerald: "bg-emerald-600",
   };
   const inner = (
-    <Card className="h-full p-4 transition hover:shadow-md">
+    <Card className={cn("h-full p-4", href && "vm-lift")}>
       <div className="flex items-center gap-2 text-xs font-medium text-stone-500">
         <span className={cn("h-2 w-2 rounded-full", dotTone[tone])} />
         {label}
       </div>
-      <div className="mt-2 text-3xl font-semibold tabular-nums text-stone-900">
+      <div className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-stone-900">
         {value}
       </div>
       {hint ? <div className="mt-1 text-xs text-stone-400">{hint}</div> : null}
@@ -133,7 +133,7 @@ export function ActionCard({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <Card className="h-full p-4 transition hover:border-emerald-200 hover:shadow-md">
+      <Card className="h-full p-4 vm-lift hover:border-emerald-200">
         <div className="text-2xl">{icon}</div>
         <div className="mt-2 text-sm font-semibold text-stone-800 group-hover:text-emerald-700">
           {title}
@@ -195,10 +195,10 @@ export function ButtonLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition",
+        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition active:scale-[0.98]",
         variant === "primary"
-          ? "bg-emerald-600 text-white hover:bg-emerald-700"
-          : "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50",
+          ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 hover:shadow-md hover:shadow-emerald-600/25"
+          : "border border-stone-200 bg-white text-stone-700 shadow-sm hover:border-stone-300 hover:bg-stone-50",
         className
       )}
     >

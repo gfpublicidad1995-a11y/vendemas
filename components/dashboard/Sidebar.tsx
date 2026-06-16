@@ -86,7 +86,7 @@ function isActive(pathname: string, href: string) {
 function Brand() {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-lg font-bold text-white">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-lg font-bold text-white shadow-sm shadow-emerald-600/30">
         V
       </div>
       <div className="leading-tight">
@@ -116,13 +116,16 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                     href={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
+                      "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
                       active
-                        ? "bg-emerald-50 font-medium text-emerald-700"
-                        : "text-stone-600 hover:bg-stone-100"
+                        ? "bg-emerald-50 font-semibold text-emerald-700"
+                        : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    {active ? (
+                      <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-emerald-600" />
+                    ) : null}
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-emerald-600" : "text-stone-400")} />
                     {item.label}
                   </Link>
                 </li>
