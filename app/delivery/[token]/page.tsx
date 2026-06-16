@@ -11,7 +11,7 @@ import { asRecord } from "@/lib/json";
 
 const s = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : String(v));
 const NIVEL: Record<string, string> = { high: "alto", medium: "medio", low: "bajo" };
-import { CopyButton } from "@/components/delivery/CopyButton";
+import { CopyButton, CopyAllButton } from "@/components/delivery/CopyButton";
 import { ShareDeliveryBar, WhatsAppCopyButton } from "@/components/delivery/ShareButtons";
 import { AdCreativePreview } from "@/components/delivery/AdCreativePreview";
 import {
@@ -183,7 +183,9 @@ export default async function DeliveryPage({
         ) : null}
 
         {/* Copies */}
-        <SectionTitle>Textos listos para copiar</SectionTitle>
+        <SectionTitle action={<CopyAllButton texts={copies.map((p) => p.body ?? "")} />}>
+          Textos listos para copiar
+        </SectionTitle>
         <div className="mb-6 space-y-2">
           {copies.map((p) => (
             <Card key={p.id} className="flex items-start justify-between gap-3 p-4">
