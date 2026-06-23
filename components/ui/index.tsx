@@ -34,6 +34,19 @@ export function Badge({
   );
 }
 
+/** Marca de VendeMás: burbuja de chat con la "V" — la firma visual del producto. */
+export function BrandMark({ className }: { className?: string }) {
+  return (
+    <span className={cn("relative inline-block h-9 w-9 shrink-0", className)}>
+      <span className="font-brand grid h-9 w-9 place-items-center rounded-[14px] bg-gradient-to-br from-emerald-500 to-emerald-700 text-lg font-bold text-white shadow-sm shadow-emerald-900/25">
+        V
+      </span>
+      {/* colita de la burbuja */}
+      <span className="absolute -bottom-1 left-1.5 h-3 w-3 rotate-45 rounded-[3px] bg-emerald-700" />
+    </span>
+  );
+}
+
 export function Card({
   children,
   className,
@@ -44,7 +57,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-stone-200/80 bg-white vm-shadow-card",
+        "rounded-2xl border border-[#ece6d9] bg-white vm-shadow-card",
         className
       )}
     >
@@ -65,7 +78,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+        <h1 className="font-brand text-[1.7rem] font-bold leading-tight text-stone-900">
           {title}
         </h1>
         {description ? (
@@ -105,7 +118,7 @@ export function StatCard({
         <span className={cn("h-2 w-2 rounded-full", dotTone[tone])} />
         {label}
       </div>
-      <div className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-stone-900">
+      <div className="font-brand mt-2 text-3xl font-bold tabular-nums text-stone-900">
         {value}
       </div>
       {hint ? <div className="mt-1 text-xs text-stone-400">{hint}</div> : null}

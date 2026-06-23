@@ -92,7 +92,7 @@ export default async function DeliveryPage({
   ].filter((x): x is { icon: string; label: string } => x !== null);
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-3xl px-4 py-8">
         {/* Encabezado */}
         <div className="mb-6 flex items-center gap-3">
@@ -105,7 +105,7 @@ export default async function DeliveryPage({
             </div>
           )}
           <div>
-            <h1 className="text-xl font-semibold text-stone-900">{business.businessName}</h1>
+            <h1 className="font-brand text-xl font-bold text-stone-900">{business.businessName}</h1>
             <p className="text-sm text-stone-500">{orderTypeLabel(order.type)} — preparado por VendeMás</p>
           </div>
           {approval ? (

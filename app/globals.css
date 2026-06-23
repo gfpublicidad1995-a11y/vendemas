@@ -1,22 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f6;
-  --foreground: #1c1917;
-  --brand: #059669; /* emerald-600 */
+  --background: #f6f3ec; /* arena cálida */
+  --foreground: #20231f; /* negro cálido con leve verde */
+  --brand: #059669; /* verde confianza (emerald) */
+  --honey: #e0962a; /* acento cálido — con cuentagotas */
+  --border: #ece6d9; /* borde cálido (no gris frío) */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-sand: var(--background);
+  --color-honey: var(--honey);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  /* Fondo cálido con un tinte de marca muy sutil arriba, para dar profundidad. */
+  /* Arena cálida con un halo de marca sutil (verde a la izq, miel a la der). */
   background:
-    radial-gradient(1100px 520px at 50% -240px, rgba(16, 185, 129, 0.07), transparent 70%),
+    radial-gradient(900px 460px at 16% -220px, rgba(5, 150, 105, 0.08), transparent 68%),
+    radial-gradient(820px 420px at 94% -260px, rgba(224, 150, 42, 0.07), transparent 70%),
     var(--background);
   background-attachment: fixed;
   color: var(--foreground);
@@ -24,8 +29,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Tipografía de marca: títulos, números grandes y wordmark. */
+.font-brand {
+  font-family: var(--font-brand), "Geist", system-ui, sans-serif;
+  letter-spacing: -0.012em;
+}
+
 ::selection {
-  background: rgba(16, 185, 129, 0.18);
+  background: rgba(5, 150, 105, 0.2);
 }
 
 /* Foco visible y prolijo (accesible) para teclado. */
@@ -33,16 +44,16 @@ a:focus-visible,
 button:focus-visible,
 [role="button"]:focus-visible,
 summary:focus-visible {
-  outline: 2px solid rgba(16, 185, 129, 0.55);
+  outline: 2px solid rgba(5, 150, 105, 0.55);
   outline-offset: 2px;
   border-radius: 0.6rem;
 }
 
-/* Sombras de tarjeta más suaves y modernas (capas). */
+/* Sombras de tarjeta cálidas y suaves (capas). */
 .vm-shadow-card {
   box-shadow:
-    0 1px 2px rgba(28, 25, 23, 0.04),
-    0 2px 6px rgba(28, 25, 23, 0.05);
+    0 1px 2px rgba(61, 50, 30, 0.05),
+    0 2px 8px rgba(61, 50, 30, 0.05);
 }
 .vm-lift {
   transition:
@@ -53,8 +64,8 @@ summary:focus-visible {
 .vm-lift:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 6px 18px rgba(28, 25, 23, 0.09),
-    0 2px 6px rgba(28, 25, 23, 0.05);
+    0 8px 22px rgba(61, 50, 30, 0.1),
+    0 2px 6px rgba(61, 50, 30, 0.05);
 }
 
 /* ---------- Animaciones (entrada de tarjetas, burbujas de chat, "escribiendo") ---------- */

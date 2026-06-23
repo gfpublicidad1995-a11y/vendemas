@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { BrandMark } from "@/components/ui";
 
 type NavItem = { href: string; label: string; icon: React.ElementType };
 type NavGroup = { title: string; items: NavItem[] };
@@ -85,12 +86,10 @@ function isActive(pathname: string, href: string) {
 
 function Brand() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-lg font-bold text-white shadow-sm shadow-emerald-600/30">
-        V
-      </div>
+    <div className="flex items-center gap-2.5">
+      <BrandMark />
       <div className="leading-tight">
-        <div className="text-base font-semibold text-stone-900">VendeMás</div>
+        <div className="font-brand text-lg font-bold text-stone-900">VendeMás</div>
         <div className="text-[11px] text-stone-400">Agencia por WhatsApp</div>
       </div>
     </div>

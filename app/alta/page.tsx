@@ -1,20 +1,19 @@
 import { BriefForm } from "@/components/intake/BriefForm";
+import { BrandMark } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
 export default function AltaPage() {
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-2xl px-4 py-10">
         {/* Encabezado de marca */}
-        <div className="mb-6 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-lg font-bold text-white">
-            V
-          </div>
-          <span className="text-lg font-semibold text-stone-900">VendeMás</span>
+        <div className="mb-6 flex items-center gap-2.5">
+          <BrandMark />
+          <span className="font-brand text-lg font-bold text-stone-900">VendeMás</span>
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight text-stone-900">
+        <h1 className="font-brand text-3xl font-bold leading-tight text-stone-900">
           Contanos de tu negocio 👋
         </h1>
         <p className="mt-2 max-w-xl text-sm text-stone-600">
